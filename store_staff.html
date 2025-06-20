@@ -1,0 +1,1058 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quản lý Nhân viên</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .tabs button {
+            padding: 8px 16px;
+            margin-right: 10px;
+            cursor: pointer;
+            background-color: #f2f2f2;
+            border: none;
+        }
+
+        .tabs button.active {
+            background-color: #4CAF50;
+            color: white;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .add-btn {
+            padding: 5px 10px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+
+        .add-btn:hover {
+            background-color: #45a049;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+
+        th,
+        td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+            min-width: 80px;
+        }
+
+        th {
+            background-color: #f2f2f2;
+            cursor: pointer;
+        }
+
+        .actions button {
+            padding: 4px 8px;
+            margin-right: 5px;
+            cursor: pointer;
+        }
+
+        .edit-btn {
+            background-color: #2196F3;
+            color: white;
+            border: none;
+        }
+
+        .delete-btn {
+            background-color: #f44336;
+            color: white;
+            border: none;
+        }
+
+        .form-container {
+            display: none;
+            margin-top: 20px;
+            padding: 15px;
+            border: 1px solid #ddd;
+            background-color: #f9f9f9;
+        }
+
+        .form-container label {
+            display: block;
+            margin: 10px 0 5px;
+        }
+
+        .form-container input,
+        .form-container select {
+            width: 100%;
+            padding: 5px;
+            box-sizing: border-box;
+        }
+
+        .form-container button {
+            padding: 5px 10px;
+            margin-top: 10px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+
+        .form-container button:hover {
+            background-color: #45a049;
+        }
+
+        .login-container {
+            display: block;
+            text-align: center;
+            margin-top: 100px;
+        }
+
+        .summary {
+            margin-top: 20px;
+            font-weight: bold;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="loginContainer" class="login-container">
+        <h2>Đăng nhập</h2>
+        <label for="maNhanVienLogin">Mã Nhân viên:</label>
+        <input type="text" id="maNhanVienLogin" required>
+        <button onclick="login()">Đăng nhập</button>
+        <p id="loginError" style="color: red; display: none;">Mã nhân viên không tồn tại.</p>
+    </div>
+
+    <div id="mainContainer" class="container" style="display: none;">
+        <div class="header">
+            <h2>Quản lý Nhân viên - <span id="currentUser"></span></h2>
+            <div class="tabs" id="tabs">
+                <button id="tabEmployees" onclick="showTab('employees')">Nhân viên</button>
+                <button id="tabActivity" onclick="showTab('activity')">Lịch sử Hoạt động</button>
+                <button id="tabProducts" onclick="showTab('products')">Sản phẩm</button>
+                <button id="tabInventory" onclick="showTab('inventory')">Tồn kho</button>
+                <button id="tabCustomers" onclick="showTab('customers')">Khách hàng</button>
+                <button id="tabOrders" onclick="showTab('orders')">Đơn hàng</button>
+                <button id="tabPayments" onclick="showTab('payments')">Thanh toán</button>
+            </div>
+            <button onclick="logout()">Đăng xuất</button>
+        </div>
+
+        <div id="employees" class="tab-content">
+            <button class="add-btn" onclick="showEmployeeForm()">Thêm Nhân viên</button>
+            <table id="employeeTable" role="grid">
+                <thead>
+                    <tr>
+                        <th onclick="sortTable('maNhanVien')">Mã NV</th>
+                        <th onclick="sortTable('hoTen')">Họ tên</th>
+                        <th onclick="sortTable('soDienThoai')">Số điện thoại</th>
+                        <th onclick="sortTable('gioiTinh')">Giới tính</th>
+                        <th onclick="sortTable('chucVu')">Chức vụ</th>
+                        <th onclick="sortTable('maCuaHang')">Mã Cửa hàng</th>
+                        <th onclick="sortTable('ngayVaoLam')">Ngày vào làm</th>
+                        <th>Hành động</th>
+                    </tr>
+                </thead>
+                <tbody id="employeeBody"></tbody>
+            </table>
+            <div class="summary">
+                <p>Tổng số nhân viên: <span id="totalEmployees">0</span></p>
+            </div>
+        </div>
+
+        <div id="activity" class="tab-content">
+            <table id="activityTable" role="grid">
+                <thead>
+                    <tr>
+                        <th onclick="sortActivity('thoiGian')">Thời gian</th>
+                        <th onclick="sortActivity('maNhanVien')">Nhân viên</th>
+                        <th onclick="sortActivity('loaiHanhDong')">Hành động</th>
+                        <th>Chi tiết</th>
+                    </tr>
+                </thead>
+                <tbody id="activityBody"></tbody>
+            </table>
+        </div>
+
+        <div id="products" class="tab-content">
+            <p>Chức năng Quản lý Sản phẩm (Tích hợp từ products.html)</p>
+        </div>
+        <div id="inventory" class="tab-content">
+            <p>Chức năng Quản lý Tồn kho (Tích hợp từ inventory.html)</p>
+        </div>
+        <div id="imports" class="tab-content">
+            <p>Chức năng Quản lý Nhập kho</p>
+        </div>
+        <div id="statistics" class="tab-content">
+            <h3>Thống kê cơ bản</h3>
+            <div class="report-section">
+                <h4>Báo cáo Doanh thu</h4>
+                <label for="revenueFilter">Lọc theo:</label>
+                <select id="revenueFilter" onchange="renderRevenueReport()">
+                    <option value="day">Ngày</option>
+                    <option value="week">Tuần</option>
+                    <option value="month">Tháng</option>
+                </select>
+                <input type="date" id="revenueDate" onchange="renderRevenueReport()">
+                <div id="revenueChart"></div>
+                <table id="revenueTable" role="grid">
+                    <thead>
+                        <tr>
+                            <th>Thời gian</th>
+                            <th>Doanh thu (VND)</th>
+                        </tr>
+                    </thead>
+                    <tbody id="revenueBody"></tbody>
+                </table>
+                <button class="add-btn" onclick="exportRevenueCSV()">Xuất CSV</button>
+            </div>
+            <div class="report-section">
+                <h4>Báo cáo Tồn kho</h4>
+                <table id="inventoryTable" role="grid">
+                    <thead>
+                        <tr>
+                            <th>Mã Sản phẩm</th>
+                            <th>Tên Sản phẩm</th>
+                            <th>Kích cỡ</th>
+                            <th>Màu sắc</th>
+                            <th>Số lượng tồn</th>
+                        </tr>
+                    </thead>
+                    <tbody id="inventoryBody"></tbody>
+                </table>
+                <button class="add-btn" onclick="exportInventoryCSV()">Xuất CSV</button>
+            </div>
+            <div class="report-section">
+                <h4>Sản phẩm Bán chạy</h4>
+                <table id="topProductsTable" role="grid">
+                    <thead>
+                        <tr>
+                            <th>Mã Sản phẩm</th>
+                            <th>Tên Sản phẩm</th>
+                            <th>Kích cỡ</th>
+                            <th>Màu sắc</th>
+                            <th>Số lượng bán</th>
+                        </tr>
+                    </thead>
+                    <tbody id="topProductsBody"></tbody>
+                </table>
+                <button class="add-btn" onclick="exportTopProductsCSV()">Xuất CSV</button>
+            </div>
+        </div>
+        <div id="customers" class="tab-content">
+            <p>Chức năng Quản lý Khách hàng (Tích hợp từ customers.html)</p>
+        </div>
+        <div id="orders" class="tab-content">
+            <p>Chức năng Quản lý Đơn hàng (Tích hợp từ orders.html)</p>
+        </div>
+        <div id="payments" class="tab-content">
+            <p>Chức năng Quản lý Thanh toán (Tích hợp từ payments.html)</p>
+        </div>
+
+        <div id="employeeForm" class="form-container">
+            <h3 id="employeeFormTitle">Thêm Nhân viên</h3>
+            <label for="maNhanVien">Mã Nhân viên:</label>
+            <input type="text" id="maNhanVien" required>
+            <label for="hoTen">Họ tên:</label>
+            <input type="text" id="hoTen" required>
+            <label for="soDienThoai">Số điện thoại:</label>
+            <input type="text" id="soDienThoai" required>
+            <label for="gioiTinh">Giới tính:</label>
+            <select id="gioiTinh" required>
+                <option value="Nam">Nam</option>
+                <option value="Nữ">Nữ</option>
+            </select>
+            <label for="chucVu">Chức vụ:</label>
+            <select id="chucVu" required>
+                <option value="Quản lý">Quản lý</option>
+                <option value="Nhân viên bán hàng">Nhân viên bán hàng</option>
+                <option value="Nhân viên kho">Nhân viên kho</option>
+            </select>
+            <label for="maCuaHang">Mã Cửa hàng:</label>
+            <input type="text" id="maCuaHang" required placeholder="VD: CH001">
+            <label for="ngayVaoLam">Ngày vào làm:</label>
+            <input type="date" id="ngayVaoLam" required>
+            <button onclick="saveEmployee()">Lưu</button>
+            <button onclick="cancelEmployeeForm()">Hủy</button>
+        </div>
+    </div>
+
+    <script>
+        let employees = [];
+        let activities = [];
+        let orders = [];
+        let orderDetails = [];
+        let products = [];
+        let payments = [];
+        let imports = [];
+        let stores = [];
+        let currentEmployee = null;
+
+        // Load data from localStorage
+        try {
+            employees = JSON.parse(localStorage.getItem('employees')) || [
+                { maNhanVien: 'NV001', hoTen: 'Nguyễn Thị X', soDienThoai: '0912223301', gioiTinh: 'Nữ', chucVu: 'Nhân viên bán hàng', maCuaHang: 'CH001', ngayVaoLam: '2023-01-15' },
+                { maNhanVien: 'NV002', hoTen: 'Trần Văn Y', soDienThoai: '0912223302', gioiTinh: 'Nam', chucVu: 'Nhân viên kho', maCuaHang: 'CH001', ngayVaoLam: '2022-06-20' },
+                { maNhanVien: 'NV003', hoTen: 'Lê Thị Z', soDienThoai: '0912223303', gioiTinh: 'Nữ', chucVu: 'Quản lý', maCuaHang: 'CH002', ngayVaoLam: '2021-03-10' }
+            ];
+            activities = JSON.parse(localStorage.getItem('activities')) || [];
+            stores = JSON.parse(localStorage.getItem('stores')) || [
+                { maCuaHang: 'CH001', tenCuaHang: 'Cửa hàng Hà Nội', diaChi: '123 Đường Láng, Hà Nội' },
+                { maCuaHang: 'CH002', tenCuaHang: 'Cửa hàng TP.HCM', diaChi: '456 Lê Lợi, TP.HCM' }
+            ];
+            products = JSON.parse(localStorage.getItem('products')) || [
+                {
+                    maSanPham: 'SP001', tenSanPham: 'Áo thun', variants: [
+                        { kichCo: 'M', mauSac: 'Đen', soLuongTonKho: 50 },
+                        { kichCo: 'L', mauSac: 'Trắng', soLuongTonKho: 30 }
+                    ]
+                },
+                {
+                    maSanPham: 'SP002', tenSanPham: 'Quần jeans', variants: [
+                        { kichCo: 'S', mauSac: 'Xanh', soLuongTonKho: 20 },
+                        { kichCo: 'M', mauSac: 'Đen', soLuongTonKho: 15 }
+                    ]
+                }
+            ];
+            orders = JSON.parse(localStorage.getItem('orders')) || [
+                { maDonHang: 'DH001', maNhanVien: 'NV001', maKhachHang: 'KH001', ngayDat: '2025-05-01', tongTien: 4500000, trangThai: 'Đã thanh toán' },
+                { maDonHang: 'DH002', maNhanVien: 'NV001', maKhachHang: 'KH002', ngayDat: '2025-05-15', tongTien: 800000, trangThai: 'Đã thanh toán' },
+                { maDonHang: 'DH003', maNhanVien: 'NV001', maKhachHang: 'KH003', ngayDat: '2025-06-03', tongTien: 850000, trangThai: 'Đang xử lý' }
+            ];
+            orderDetails = JSON.parse(localStorage.getItem('orderDetails')) || [
+                { maDonHang: 'DH001', maSanPham: 'SP001', kichCo: 'M', mauSac: 'Đen', soLuong: 10, donGia: 200000 },
+                { maDonHang: 'DH001', maSanPham: 'SP002', kichCo: 'S', mauSac: 'Xanh', soLuong: 5, donGia: 500000 },
+                { maDonHang: 'DH002', maSanPham: 'SP001', kichCo: 'L', mauSac: 'Trắng', soLuong: 4, donGia: 200000 },
+                { maDonHang: 'DH003', maSanPham: 'SP002', kichCo: 'M', mauSac: 'Đen', soLuong: 3, donGia: 500000 }
+            ];
+            payments = JSON.parse(localStorage.getItem('payments')) || [
+                { maThanhToan: 'TT001', maDonHang: 'DH001', thoiGian: '2025-05-01T10:00', soTien: 4500000, hinhThuc: 'Tiền mặt', trangThai: 'Đã thanh toán', maGiaoDich: null, ghiChu: null },
+                { maThanhToan: 'TT002', maDonHang: 'DH002', thoiGian: '2025-05-15T12:00', soTien: 800000, hinhThuc: 'Momo', trangThai: 'Đã thanh toán', maGiaoDich: 'MOMO123', ghiChu: null }
+            ];
+            imports = JSON.parse(localStorage.getItem('imports')) || [
+                { maNhapKho: 'NK001', maNhanVien: 'NV002', maCuaHang: 'CH001', ngayNhap: '2025-04-01', tongSoLuong: 100, ghiChu: 'Nhập lô giày mới' }
+            ];
+        } catch (e) {
+            alert('Lỗi khi tải dữ liệu: ' + e.message);
+        }
+
+        let sortDirection = 1;
+        let lastSortedColumn = '';
+
+        function login() {
+            const maNhanVien = document.getElementById('maNhanVienLogin').value.trim();
+            const employee = employees.find(e => e.maNhanVien === maNhanVien);
+            if (!employee) {
+                document.getElementById('loginError').style.display = 'block';
+                return;
+            }
+
+            currentEmployee = employee;
+            document.getElementById('loginContainer').style.display = 'none';
+            document.getElementById('mainContainer').style.display = 'block';
+            document.getElementById('currentUser').textContent = `${employee.hoTen} (${employee.chucVu})`;
+            updateTabsByRole(employee.chucVu);
+            logActivity('Đăng nhập', `Nhân viên ${employee.hoTen} đăng nhập`);
+            renderEmployees();
+        }
+
+        function logout() {
+            if (currentEmployee) {
+                logActivity('Đăng xuất', `Nhân viên ${currentEmployee.hoTen} đăng xuất`);
+            }
+            currentEmployee = null;
+            document.getElementById('loginContainer').style.display = 'block';
+            document.getElementById('mainContainer').style.display = 'none';
+            document.getElementById('maNhanVienLogin').value = '';
+            document.getElementById('loginError').style.display = 'none';
+        }
+
+        function updateTabsByRole(chucVu) {
+            const tabs = document.getElementById('tabs');
+            tabs.innerHTML = '';
+            if (chucVu === 'Quản lý') {
+                tabs.innerHTML = `
+            <button id="tabEmployees" class="active" onclick="showTab('employees')">Nhân viên</button>
+            <button id="tabActivity" onclick="showTab('activity')">Lịch sử Hoạt động</button>
+            <button id="tabProducts" onclick="showTab('products')">Sản phẩm</button>
+            <button id="tabInventory" onclick="showTab('inventory')">Tồn kho</button>
+            <button id="tabCustomers" onclick="showTab('customers')">Khách hàng</button>
+            <button id="tabOrders" onclick="showTab('orders')">Đơn hàng</button>
+            <button id="tabPayments" onclick="showTab('payments')">Thanh toán</button>
+            <button id="tabStatistics" onclick="showTab('statistics')">Thống kê</button>
+        `;
+                showTab('employees');
+            } else if (chucVu === 'Nhân viên bán hàng') {
+                tabs.innerHTML = `
+            <button id="tabProducts" class="active" onclick="showTab('products')">Sản phẩm</button>
+            <button id="tabCustomers" onclick="showTab('customers')">Khách hàng</button>
+            <button id="tabOrders" onclick="showTab('orders')">Đơn hàng</button>
+            <button id="tabPayments" onclick="showTab('payments')">Thanh toán</button>
+        `;
+                showTab('products');
+            } else if (chucVu === 'Nhân viên kho') {
+                tabs.innerHTML = `
+            <button id="tabInventory" class="active" onclick="showTab('inventory')">Tồn kho</button>
+            <button id="tabImports" onclick="showTab('imports')">Nhập kho</button>
+        `;
+                showTab('inventory');
+            }
+        }
+
+        function showTab(tabId) {
+            document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
+            document.querySelectorAll('.tabs button').forEach(btn => btn.classList.remove('active'));
+            document.getElementById(tabId).classList.add('active');
+            document.getElementById(`tab${tabId.charAt(0).toUpperCase() + tabId.slice(1)}`).classList.add('active');
+
+            if (tabId === 'employees') renderEmployees();
+            else if (tabId === 'activity') renderActivity();
+            else if (tabId === 'imports') renderImports();
+            else if (tabId === 'statistics') {
+                renderRevenueReport();
+                renderInventoryReport();
+                renderTopProductsReport();
+                logActivity('Xem', 'Xem báo cáo thống kê');
+            } else logActivity('Xem', `Xem danh sách ${tabId}`);
+        }
+
+        function sortTable(column) {
+            if (lastSortedColumn === column) {
+                sortDirection *= -1;
+            } else {
+                sortDirection = 1;
+            }
+            lastSortedColumn = column;
+
+            employees.sort((a, b) => {
+                const valA = (a[column] || '').toString().toLowerCase();
+                const valB = (b[column] || '').toString().toLowerCase();
+                return valA > valB ? sortDirection : valA < valB ? -sortDirection : 0;
+            });
+
+            renderEmployees();
+        }
+
+        function sortActivity(column) {
+            if (lastSortedColumn === column) {
+                sortDirection *= -1;
+            } else {
+                sortDirection = 1;
+            }
+            lastSortedColumn = column;
+
+            activities.sort((a, b) => {
+                let valA = a[column];
+                let valB = b[column];
+                if (column === 'thoiGian') {
+                    valA = new Date(valA);
+                    valB = new Date(valB);
+                } else {
+                    valA = (valA || '').toString().toLowerCase();
+                    valB = (valB || '').toString().toLowerCase();
+                }
+                return valA > valB ? sortDirection : valA < valB ? -sortDirection : 0;
+            });
+
+            renderActivity();
+        }
+
+        function renderEmployees() {
+            if (currentEmployee.chucVu !== 'Quản lý') {
+                return;
+            }
+            const employeeBody = document.getElementById('employeeBody');
+            employeeBody.innerHTML = '';
+
+            employees.forEach(employee => {
+                const store = stores.find(s => s.maCuaHang === employee.maCuaHang);
+                const row = document.createElement('tr');
+                row.innerHTML = `
+            <td>${employee.maNhanVien}</td>
+            <td>${employee.hoTen}</td>
+            <td>${employee.soDienThoai}</td>
+            <td>${employee.gioiTinh}</td>
+            <td>${employee.chucVu}</td>
+            <td>${employee.maCuaHang} (${store ? store.tenCuaHang : 'Không xác định'})</td>
+            <td>${new Date(employee.ngayVaoLam).toLocaleDateString('vi-VN')}</td>
+            <td class="actions">
+                <button class="edit-btn" aria-label="Sửa nhân viên ${employee.hoTen}" onclick="editEmployee('${employee.maNhanVien}')">Sửa</button>
+                <button class="delete-btn" aria-label="Xóa nhân viên ${employee.hoTen}" onclick="deleteEmployee('${employee.maNhanVien}')">Xóa</button>
+                <button class="view-btn" aria-label="Xem đơn hàng ${employee.maNhanVien}" onclick="viewEmployeeOrders('${employee.maNhanVien}')">Đơn hàng</button>
+                <button class="view-btn" aria-label="Xem nhập kho ${employee.maNhanVien}" onclick="viewEmployeeImports('${employee.maNhanVien}')">Nhập kho</button>
+            </td>
+        `;
+                employeeBody.appendChild(row);
+            });
+
+            document.getElementById('totalEmployees').textContent = employees.length;
+        }
+
+        function renderActivity() {
+            if (currentEmployee.chucVu !== 'Quản lý') {
+                return;
+            }
+            const activityBody = document.getElementById('activityBody');
+            activityBody.innerHTML = '';
+
+            activities.forEach(activity => {
+                const employee = employees.find(e => e.maNhanVien === activity.maNhanVien);
+                const row = document.createElement('tr');
+                row.innerHTML = `
+            <td>${new Date(activity.thoiGian).toLocaleString('vi-VN')}</td>
+            <td>${employee ? employee.hoTen : activity.maNhanVien}</td>
+            <td>${activity.loaiHanhDong}</td>
+            <td>${activity.chiTiet}</td>
+        `;
+                activityBody.appendChild(row);
+            });
+        }
+
+        function renderImports() {
+            if (currentEmployee.chucVu !== 'Nhân viên kho') {
+                return;
+            }
+            const importsTab = document.getElementById('imports');
+            importsTab.innerHTML = `
+        <h3>Danh sách Nhập kho</h3>
+        <table id="importsTable" role="grid">
+            <thead>
+                <tr>
+                    <th>Mã Nhập kho</th>
+                    <th>Cửa hàng</th>
+                    <th>Ngày nhập</th>
+                    <th>Tổng số lượng</th>
+                    <th>Ghi chú</th>
+                </tr>
+            </thead>
+            <tbody id="importsBody"></tbody>
+        </table>
+    `;
+
+            const importsBody = document.getElementById('importsBody');
+            importsBody.innerHTML = '';
+
+            imports.filter(i => i.maNhanVien === currentEmployee.maNhanVien).forEach(imp => {
+                const store = stores.find(s => s.maCuaHang === imp.maCuaHang);
+                const row = document.createElement('tr');
+                row.innerHTML = `
+            <td>${imp.maNhapKho}</td>
+            <td>${imp.maCuaHang} (${store ? store.tenCuaHang : 'Không xác định'})</td>
+            <td>${new Date(imp.ngayNhap).toLocaleDateString('vi-VN')}</td>
+            <td>${imp.tongSoLuong}</td>
+            <td>${imp.ghiChu || '-'}</td>
+        `;
+                importsBody.appendChild(row);
+            });
+        }
+
+        function showEmployeeForm() {
+            if (currentEmployee.chucVu !== 'Quản lý') {
+                alert('Bạn không có quyền thực hiện hành động này.');
+                return;
+            }
+            document.getElementById('employeeForm').style.display = 'block';
+            document.getElementById('employeeFormTitle').textContent = 'Thêm Nhân viên';
+            document.getElementById('maNhanVien').value = `NV${String(employees.length + 1).padStart(3, '0')}`;
+            document.getElementById('hoTen').value = '';
+            document.getElementById('soDienThoai').value = '';
+            document.getElementById('gioiTinh').value = 'Nam';
+            document.getElementById('chucVu').value = 'Nhân viên bán hàng';
+            document.getElementById('maCuaHang').value = '';
+            document.getElementById('ngayVaoLam').value = new Date().toISOString().split('T')[0];
+        }
+
+        function editEmployee(maNhanVien) {
+            if (currentEmployee.chucVu !== 'Quản lý') {
+                alert('Bạn không có quyền thực hiện hành động này.');
+                return;
+            }
+            const employee = employees.find(e => e.maNhanVien === maNhanVien);
+            document.getElementById('employeeForm').style.display = 'block';
+            document.getElementById('employeeFormTitle').textContent = 'Sửa Nhân viên';
+            document.getElementById('maNhanVien').value = employee.maNhanVien;
+            document.getElementById('hoTen').value = employee.hoTen;
+            document.getElementById('soDienThoai').value = employee.soDienThoai;
+            document.getElementById('gioiTinh').value = employee.gioiTinh;
+            document.getElementById('chucVu').value = employee.chucVu;
+            document.getElementById('maCuaHang').value = employee.maCuaHang;
+            document.getElementById('ngayVaoLam').value = employee.ngayVaoLam;
+        }
+
+        function saveEmployee() {
+            if (currentEmployee.chucVu !== 'Quản lý') {
+                alert('Bạn không có quyền thực hiện hành động này.');
+                return;
+            }
+            const maNhanVien = document.getElementById('maNhanVien').value.trim();
+            const hoTen = document.getElementById('hoTen').value.trim();
+            const soDienThoai = document.getElementById('soDienThoai').value.trim();
+            const gioiTinh = document.getElementById('gioiTinh').value;
+            const chucVu = document.getElementById('chucVu').value;
+            const maCuaHang = document.getElementById('maCuaHang').value.trim();
+            const ngayVaoLam = document.getElementById('ngayVaoLam').value;
+
+            // Validation
+            if (!maNhanVien || !hoTen || !soDienThoai || !gioiTinh || !chucVu || !maCuaHang || !ngayVaoLam) {
+                alert('Vui lòng điền đầy đủ thông tin.');
+                return;
+            }
+
+            const phoneRegex = /^\d{10}$/;
+            if (!phoneRegex.test(soDienThoai)) {
+                alert('Số điện thoại phải có 10 chữ số.');
+                return;
+            }
+
+            const storeRegex = /^CH\d{3}$/;
+            if (!storeRegex.test(maCuaHang)) {
+                alert('Mã cửa hàng phải có định dạng CHxxx (ví dụ: CH001).');
+                return;
+            }
+
+            if (!stores.some(s => s.maCuaHang === maCuaHang)) {
+                alert('Mã cửa hàng không tồn tại.');
+                return;
+            }
+
+            const existingEmployeeIndex = employees.findIndex(e => e.maNhanVien === maNhanVien);
+            if (existingEmployeeIndex === -1 && employees.some(e => e.maNhanVien === maNhanVien)) {
+                alert('Mã nhân viên đã tồn tại.');
+                return;
+            }
+
+            const employee = { maNhanVien, hoTen, soDienThoai, gioiTinh, chucVu, maCuaHang, ngayVaoLam };
+            try {
+                if (existingEmployeeIndex !== -1) {
+                    employees[existingEmployeeIndex] = employee;
+                    logActivity('Sửa nhân viên', `Sửa thông tin nhân viên ${maNhanVien}`);
+                } else {
+                    employees.push(employee);
+                    logActivity('Thêm nhân viên', `Thêm nhân viên ${maNhanVien}`);
+                }
+                localStorage.setItem('employees', JSON.stringify(employees));
+                document.getElementById('employeeForm').style.display = 'none';
+                renderEmployees();
+            } catch (e) {
+                alert('Lỗi khi lưu dữ liệu: ' + e.message);
+            }
+        }
+
+        function deleteEmployee(maNhanVien) {
+            if (currentEmployee.chucVu !== 'Quản lý') {
+                alert('Bạn không có quyền thực hiện hành động này.');
+                return;
+            }
+            if (maNhanVien === currentEmployee.maNhanVien) {
+                alert('Không thể xóa tài khoản đang đăng nhập.');
+                return;
+            }
+            if (orders.some(o => o.maNhanVien === maNhanVien) || imports.some(i => i.maNhanVien === maNhanVien)) {
+                alert('Không thể xóa nhân viên này vì đã liên quan đến đơn hàng hoặc nhập kho.');
+                return;
+            }
+            if (confirm('Bạn có chắc muốn xóa nhân viên này?')) {
+                employees = employees.filter(e => e.maNhanVien !== maNhanVien);
+                try {
+                    localStorage.setItem('employees', JSON.stringify(employees));
+                    logActivity('Xóa nhân viên', `Xóa nhân viên ${maNhanVien}`);
+                    renderEmployees();
+                } catch (e) {
+                    alert('Lỗi khi xóa dữ liệu: ' + e.message);
+                }
+            }
+        }
+
+        function cancelEmployeeForm() {
+            document.getElementById('employeeForm').style.display = 'none';
+        }
+
+        function viewEmployeeOrders(maNhanVien) {
+            if (currentEmployee.chucVu !== 'Quản lý') {
+                alert('Bạn không có quyền thực hiện hành động này.');
+                return;
+            }
+            const employee = employees.find(e => e.maNhanVien === maNhanVien);
+            const employeeOrders = orders.filter(o => o.maNhanVien === maNhanVien);
+
+            const ordersTab = document.getElementById('employees');
+            ordersTab.innerHTML = `
+        <h3>Đơn hàng của ${employee.hoTen} (${maNhanVien})</h3>
+        <button class="add-btn" onclick="renderEmployees()">Quay lại</button>
+        <table id="employeeOrdersTable" role="grid">
+            <thead>
+                <tr>
+                    <th>Mã Đơn hàng</th>
+                    <th>Khách hàng</th>
+                    <th>Ngày đặt</th>
+                    <th>Tổng tiền</th>
+                    <th>Trạng thái</th>
+                </tr>
+            </thead>
+            <tbody id="employeeOrdersBody"></tbody>
+        </table>
+    `;
+
+            const ordersBody = document.getElementById('employeeOrdersBody');
+            ordersBody.innerHTML = '';
+            employeeOrders.forEach(order => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+            <td>${order.maDonHang}</td>
+            <td>${order.maKhachHang}</td>
+            <td>${new Date(order.ngayDat).toLocaleDateString('vi-VN')}</td>
+            <td>${order.tongTien.toLocaleString('vi-VN')} VND</td>
+            <td>${order.trangThai}</td>
+        `;
+                ordersBody.appendChild(row);
+            });
+
+            logActivity('Xem đơn hàng', `Xem đơn hàng của nhân viên ${maNhanVien}`);
+        }
+
+        function viewEmployeeImports(maNhanVien) {
+            if (currentEmployee.chucVu !== 'Quản lý') {
+                alert('Bạn không có quyền thực hiện hành động này.');
+                return;
+            }
+            const employee = employees.find(e => e.maNhanVien === maNhanVien);
+            const employeeImports = imports.filter(i => i.maNhanVien === maNhanVien);
+
+            const importsTab = document.getElementById('employees');
+            importsTab.innerHTML = `
+        <h3>Nhập kho của ${employee.hoTen} (${maNhanVien})</h3>
+        <button class="add-btn" onclick="renderEmployees()">Quay lại</button>
+        <table id="employeeImportsTable" role="grid">
+            <thead>
+                <tr>
+                    <th>Mã Nhập kho</th>
+                    <th>Cửa hàng</th>
+                    <th>Ngày nhập</th>
+                    <th>Tổng số lượng</th>
+                    <th>Ghi chú</th>
+                </tr>
+            </thead>
+            <tbody id="employeeImportsBody"></tbody>
+        </table>
+    `;
+
+            const importsBody = document.getElementById('employeeImportsBody');
+            importsBody.innerHTML = '';
+            employeeImports.forEach(imp => {
+                const store = stores.find(s => s.maCuaHang === imp.maCuaHang);
+                const row = document.createElement('tr');
+                row.innerHTML = `
+            <td>${imp.maNhapKho}</td>
+            <td>${imp.maCuaHang} (${store ? store.tenCuaHang : 'Không xác định'})</td>
+            <td>${new Date(imp.ngayNhap).toLocaleDateString('vi-VN')}</td>
+            <td>${imp.tongSoLuong}</td>
+            <td>${imp.ghiChu || '-'}</td>
+        `;
+                importsBody.appendChild(row);
+            });
+
+            logActivity('Xem nhập kho', `Xem nhập kho của nhân viên ${maNhanVien}`);
+        }
+
+        function renderRevenueReport() {
+            if (currentEmployee.chucVu !== 'Quản lý') {
+                alert('Bạn không có quyền truy cập báo cáo.');
+                return;
+            }
+            const filter = document.getElementById('revenueFilter').value;
+            const selectedDate = new Date(document.getElementById('revenueDate').value || new Date());
+            const revenueBody = document.getElementById('revenueBody');
+            revenueBody.innerHTML = '';
+
+            let startDate, endDate, labelFormat;
+            if (filter === 'day') {
+                startDate = new Date(selectedDate.getFullYear(), selectedDate.getMonth(), selectedDate.getDate());
+                endDate = new Date(startDate);
+                endDate.setDate(endDate.getDate() + 1);
+                labelFormat = 'DD/MM/YYYY';
+            } else if (filter === 'week') {
+                startDate = new Date(selectedDate.getFullYear(), selectedDate.getMonth(), selectedDate.getDate() - selectedDate.getDay());
+                endDate = new Date(startDate);
+                endDate.setDate(endDate.getDate() + 7);
+                labelFormat = 'Tuần WW/YYYY';
+            } else if (filter === 'month') {
+                startDate = new Date(selectedDate.getFullYear(), selectedDate.getMonth(), 1);
+                endDate = new Date(startDate.getFullYear(), startDate.getMonth() + 1, 1);
+                labelFormat = 'MM/YYYY';
+            }
+
+            const revenueData = {};
+            orders
+                .filter(o => o.trangThai === 'Đã thanh toán' && payments.some(p => p.maDonHang === o.maDonHang && p.trangThai === 'Đã thanh toán'))
+                .forEach(order => {
+                    const orderDate = new Date(order.ngayDat);
+                    if (orderDate >= startDate && orderDate < endDate) {
+                        let key;
+                        if (filter === 'day') {
+                            key = orderDate.toLocaleDateString('vi-VN');
+                        } else if (filter === 'week') {
+                            const weekStart = new Date(orderDate.getFullYear(), orderDate.getMonth(), orderDate.getDate() - orderDate.getDay());
+                            key = `Tuần ${Math.ceil((orderDate.getDate() + weekStart.getDay()) / 7)}/${orderDate.getFullYear()}`;
+                        } else {
+                            key = `${orderDate.getMonth() + 1}/${orderDate.getFullYear()}`;
+                        }
+                        revenueData[key] = (revenueData[key] || 0) + order.tongTien;
+                    }
+                });
+
+            Object.keys(revenueData).forEach(key => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+            <td>${key}</td>
+            <td>${revenueData[key].toLocaleString('vi-VN')} VND</td>
+        `;
+                revenueBody.appendChild(row);
+            });
+
+            // Render revenue chart
+            const labels = Object.keys(revenueData);
+            const data = Object.values(revenueData);
+            if (labels.length > 0) {
+                ```chartjs
+        {
+            "type": "bar",
+            "data": {
+                "labels": ${JSON.stringify(labels)},
+                "datasets": [{
+                    "label": "Doanh thu (VND)",
+                    "data": ${JSON.stringify(data)},
+                    "backgroundColor": "rgba(75, 192, 192, 0.6)",
+                    "borderColor": "rgba(75, 192, 192, 1)",
+                    "borderWidth": 1
+                }]
+            },
+            "options": {
+                "scales": {
+                    "y": {
+                        "beginAtZero": true
+                    }
+                },
+                "plugins": {
+                    "legend": {
+                        "display": true
+                    }
+                }
+            }
+        }
+        ```
+            }
+        }
+
+        function renderInventoryReport() {
+            if (currentEmployee.chucVu !== 'Quản lý') {
+                alert('Bạn không có quyền truy cập báo cáo.');
+                return;
+            }
+            const inventoryBody = document.getElementById('inventoryBody');
+            inventoryBody.innerHTML = '';
+
+            products.forEach(product => {
+                product.variants.forEach(variant => {
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                <td>${product.maSanPham}</td>
+                <td>${product.tenSanPham}</td>
+                <td>${variant.kichCo}</td>
+                <td>${variant.mauSac}</td>
+                <td>${variant.soLuongTonKho}</td>
+            `;
+                    inventoryBody.appendChild(row);
+                });
+            });
+        }
+
+        function renderTopProductsReport() {
+            if (currentEmployee.chucVu !== 'Quản lý') {
+                alert('Bạn không có quyền truy cập báo cáo.');
+                return;
+            }
+            const topProductsBody = document.getElementById('topProductsBody');
+            topProductsBody.innerHTML = '';
+
+            const productSales = {};
+            orderDetails.forEach(detail => {
+                const key = `${detail.maSanPham}-${detail.kichCo}-${detail.mauSac}`;
+                if (!productSales[key]) {
+                    const product = products.find(p => p.maSanPham === detail.maSanPham);
+                    productSales[key] = {
+                        maSanPham: detail.maSanPham,
+                        tenSanPham: product ? product.tenSanPham : 'Không xác định',
+                        kichCo: detail.kichCo,
+                        mauSac: detail.mauSac,
+                        soLuong: 0
+                    };
+                }
+                productSales[key].soLuong += detail.soLuong;
+            });
+
+            const sortedProducts = Object.values(productSales).sort((a, b) => b.soLuong - a.soLuong);
+            sortedProducts.forEach(product => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+            <td>${product.maSanPham}</td>
+            <td>${product.tenSanPham}</td>
+            <td>${product.kichCo}</td>
+            <td>${product.mauSac}</td>
+            <td>${product.soLuong}</td>
+        `;
+                topProductsBody.appendChild(row);
+            });
+        }
+
+        function exportRevenueCSV() {
+            if (currentEmployee.chucVu !== 'Quản lý') {
+                alert('Bạn không có quyền xuất báo cáo.');
+                return;
+            }
+            const filter = document.getElementById('revenueFilter').value;
+            const selectedDate = new Date(document.getElementById('revenueDate').value || new Date());
+            let startDate, endDate;
+            if (filter === 'day') {
+                startDate = new Date(selectedDate.getFullYear(), selectedDate.getMonth(), selectedDate.getDate());
+                endDate = new Date(startDate);
+                endDate.setDate(endDate.getDate() + 1);
+            } else if (filter === 'week') {
+                startDate = new Date(selectedDate.getFullYear(), selectedDate.getMonth(), selectedDate.getDate() - selectedDate.getDay());
+                endDate = new Date(startDate);
+                endDate.setDate(endDate.getDate() + 7);
+            } else {
+                startDate = new Date(selectedDate.getFullYear(), selectedDate.getMonth(), 1);
+                endDate = new Date(startDate.getFullYear(), startDate.getMonth() + 1, 1);
+            }
+
+            const revenueData = {};
+            orders
+                .filter(o => o.trangThai === 'Đã thanh toán' && payments.some(p => p.maDonHang === o.maDonHang && p.trangThai === 'Đã thanh toán'))
+                .forEach(order => {
+                    const orderDate = new Date(order.ngayDat);
+                    if (orderDate >= startDate && orderDate < endDate) {
+                        let key;
+                        if (filter === 'day') {
+                            key = orderDate.toLocaleDateString('vi-VN');
+                        } else if (filter === 'week') {
+                            const weekStart = new Date(orderDate.getFullYear(), orderDate.getMonth(), orderDate.getDate() - orderDate.getDay());
+                            key = `Tuần ${Math.ceil((orderDate.getDate() + weekStart.getDay()) / 7)}/${orderDate.getFullYear()}`;
+                        } else {
+                            key = `${orderDate.getMonth() + 1}/${orderDate.getFullYear()}`;
+                        }
+                        revenueData[key] = (revenueData[key] || 0) + order.tongTien;
+                    }
+                });
+
+            let csv = 'Thời gian,Doanh thu (VND)\n';
+            Object.keys(revenueData).forEach(key => {
+                csv += `${key},${revenueData[key]}\n`;
+            });
+
+            downloadCSV(csv, `DoanhThu_${filter}_${selectedDate.toISOString().split('T')[0]}.csv`);
+        }
+
+        function exportInventoryCSV() {
+            if (currentEmployee.chucVu !== 'Quản lý') {
+                alert('Bạn không có quyền xuất báo cáo.');
+                return;
+            }
+            let csv = 'Mã Sản phẩm,Tên Sản phẩm,Kích cỡ,Màu sắc,Số lượng tồn\n';
+            products.forEach(product => {
+                product.variants.forEach(variant => {
+                    csv += `${product.maSanPham},${product.tenSanPham},${variant.kichCo},${variant.mauSac},${variant.soLuongTonKho}\n`;
+                });
+            });
+
+            downloadCSV(csv, `TonKho_${new Date().toISOString().split('T')[0]}.csv`);
+        }
+
+        function exportTopProductsCSV() {
+            if (currentEmployee.chucVu !== 'Quản lý') {
+                alert('Bạn không có quyền xuất báo cáo.');
+                return;
+            }
+            const productSales = {};
+            orderDetails.forEach(detail => {
+                const key = `${detail.maSanPham}-${detail.kichCo}-${detail.mauSac}`;
+                if (!productSales[key]) {
+                    const product = products.find(p => p.maSanPham === detail.maSanPham);
+                    productSales[key] = {
+                        maSanPham: detail.maSanPham,
+                        tenSanPham: product ? product.tenSanPham : 'Không xác định',
+                        kichCo: detail.kichCo,
+                        mauSac: detail.mauSac,
+                        soLuong: 0
+                    };
+                }
+                productSales[key].soLuong += detail.soLuong;
+            });
+
+            let csv = 'Mã Sản phẩm,Tên Sản phẩm,Kích cỡ,Màu sắc,Số lượng bán\n';
+            Object.values(productSales).sort((a, b) => b.soLuong - a.soLuong).forEach(product => {
+                csv += `${product.maSanPham},${product.tenSanPham},${product.kichCo},${product.mauSac},${product.soLuong}\n`;
+            });
+
+            downloadCSV(csv, `TopSanPham_${new Date().toISOString().split('T')[0]}.csv`);
+        }
+
+        function downloadCSV(csv, filename) {
+            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = filename;
+            link.click();
+            URL.revokeObjectURL(link.href);
+        }
+
+        function logActivity(loaiHanhDong, chiTiet) {
+            if (!currentEmployee) return;
+            const activity = {
+                maNhanVien: currentEmployee.maNhanVien,
+                thoiGian: new Date().toISOString(),
+                loaiHanhDong,
+                chiTiet
+            };
+            activities.push(activity);
+            try {
+                localStorage.setItem('activities', JSON.stringify(activities));
+            } catch (e) {
+                alert('Lỗi khi lưu lịch sử hoạt động: ' + e.message);
+            }
+        }
+
+        // Initialize
+        if (currentEmployee) {
+            updateTabsByRole(currentEmployee.chucVu);
+            renderEmployees();
+        }
+    </script>
+</body>
+
+</html>

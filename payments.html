@@ -1,0 +1,1058 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quản lý Nhân viên & Thanh toán</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .tabs button {
+            padding: 8px 16px;
+            margin-right: 10px;
+            cursor: pointer;
+            background-color: #f2f2f2;
+            border: none;
+        }
+
+        .tabs button.active {
+            background-color: #4CAF50;
+            color: white;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .add-btn {
+            padding: 5px 10px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+
+        .add-btn:hover {
+            background-color: #45a049;
+        }
+
+        .search-bar select {
+            padding: 5px;
+            margin-right: 10px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+
+        th,
+        td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+            min-width: 80px;
+        }
+
+        th {
+            background-color: #f2f2f2;
+            cursor: pointer;
+        }
+
+        .actions button {
+            padding: 4px 8px;
+            margin-right: 5px;
+            cursor: pointer;
+        }
+
+        .edit-btn {
+            background-color: #2196F3;
+            color: white;
+            border: none;
+        }
+
+        .delete-btn,
+        .refund-btn {
+            background-color: #f44336;
+            color: white;
+            border: none;
+        }
+
+        .refund-btn {
+            background-color: #FFC107;
+            color: black;
+        }
+
+        .form-container {
+            display: none;
+            margin-top: 20px;
+            padding: 15px;
+            border: 1px solid #ddd;
+            background-color: #f9f9f9;
+        }
+
+        .form-container label {
+            display: block;
+            margin: 10px 0 5px;
+        }
+
+        .form-container input,
+        .form-container select,
+        .form-container textarea {
+            width: 100%;
+            padding: 5px;
+            box-sizing: border-box;
+        }
+
+        .form-container button {
+            padding: 5px 10px;
+            margin-top: 10px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+
+        .form-container button:hover {
+            background-color: #45a049;
+        }
+
+        .login-container {
+            display: block;
+            text-align: center;
+            margin-top: 100px;
+        }
+
+        .summary {
+            margin-top: 20px;
+            font-weight: bold;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="loginContainer" class="login-container">
+        <h2>Đăng nhập</h2>
+        <label for="maNhanVienLogin">Mã Nhân viên:</label>
+        <input type="text" id="maNhanVienLogin" required>
+        <button onclick="login()">Đăng nhập</button>
+        <p id="loginError" style="color: red; display: none;">Mã nhân viên không tồn tại.</p>
+    </div>
+
+    <div id="mainContainer" class="container" style="display: none;">
+        <div class="header">
+            <h2>Quản lý Hệ thống - <span id="currentUser"></span></h2>
+            <div class="tabs" id="tabs">
+                <button id="tabEmployees" onclick="showTab('employees')">Nhân viên</button>
+                <button id="tabActivity" onclick="showTab('activity')">Lịch sử Hoạt động</button>
+                <button id="tabProducts" onclick="showTab('products')">Sản phẩm</button>
+                <button id="tabInventory" onclick="showTab('inventory')">Tồn kho</button>
+                <button id="tabCustomers" onclick="showTab('customers')">Khách hàng</button>
+                <button id="tabOrders" onclick="showTab('orders')">Đơn hàng</button>
+                <button id="tabPayments" onclick="showTab('payments')">Thanh toán</button>
+            </div>
+            <button onclick="logout()">Đăng xuất</button>
+        </div>
+
+        <div id="employees" class="tab-content">
+            <button class="add-btn" onclick="showEmployeeForm()">Thêm Nhân viên</button>
+            <table id="employeeTable" role="grid">
+                <thead>
+                    <tr>
+                        <th onclick="sortTable('maNhanVien')">Mã NV</th>
+                        <th onclick="sortTable('hoTen')">Họ tên</th>
+                        <th onclick="sortTable('soDienThoai')">Số điện thoại</th>
+                        <th onclick="sortTable('gioiTinh')">Giới tính</th>
+                        <th onclick="sortTable('chucVu')">Chức vụ</th>
+                        <th onclick="sortTable('maCuaHang')">Mã Cửa hàng</th>
+                        <th onclick="sortTable('ngayVaoLam')">Ngày vào làm</th>
+                        <th>Hành động</th>
+                    </tr>
+                </thead>
+                <tbody id="employeeBody"></tbody>
+            </table>
+            <div class="summary">
+                <p>Tổng số nhân viên: <span id="totalEmployees">0</span></p>
+            </div>
+        </div>
+
+        <div id="activity" class="tab-content">
+            <table id="activityTable" role="grid">
+                <thead>
+                    <tr>
+                        <th onclick="sortActivity('thoiGian')">Thời gian</th>
+                        <th onclick="sortActivity('maNhanVien')">Nhân viên</th>
+                        <th onclick="sortActivity('loaiHanhDong')">Hành động</th>
+                        <th>Chi tiết</th>
+                    </tr>
+                </thead>
+                <tbody id="activityBody"></tbody>
+            </table>
+        </div>
+
+        <div id="products" class="tab-content">
+            <p>Chức năng Quản lý Sản phẩm (Chưa tích hợp)</p>
+        </div>
+        <div id="inventory" class="tab-content">
+            <p>Chức năng Quản lý Tồn kho (Chưa tích hợp)</p>
+        </div>
+        <div id="customers" class="tab-content">
+            <p>Chức năng Quản lý Khách hàng (Chưa tích hợp)</p>
+        </div>
+        <div id="orders" class="tab-content">
+            <p>Chức năng Quản lý Đơn hàng (Chưa tích hợp)</p>
+        </div>
+
+        <div id="payments" class="tab-content">
+            <div class="header">
+                <h3>Quản lý Thanh toán</h3>
+                <div class="search-bar">
+                    <select id="filterStatus">
+                        <option value="">Tất cả trạng thái</option>
+                        <option value="Đã thanh toán">Đã thanh toán</option>
+                        <option value="Chưa thanh toán">Chưa thanh toán</option>
+                        <option value="Hoàn tiền">Hoàn tiền</option>
+                    </select>
+                </div>
+                <button class="add-btn" onclick="showPaymentForm()">Thêm Thanh toán</button>
+            </div>
+
+            <table id="paymentTable" role="grid">
+                <thead>
+                    <tr>
+                        <th onclick="sortPayments('maThanhToan')">Mã Thanh toán</th>
+                        <th onclick="sortPayments('maDonHang')">Mã Đơn hàng</th>
+                        <th onclick="sortPayments('thoiGian')">Thời gian</th>
+                        <th onclick="sortPayments('soTien')">Số tiền (VND)</th>
+                        <th onclick="sortPayments('hinhThuc')">Hình thức</th>
+                        <th onclick="sortPayments('trangThai')">Trạng thái</th>
+                        <th onclick="sortPayments('maGiaoDich')">Mã Giao dịch</th>
+                        <th onclick="sortPayments('ghiChu')">Ghi chú</th>
+                        <th>Hành động</th>
+                    </tr>
+                </thead>
+                <tbody id="paymentBody"></tbody>
+            </table>
+
+            <div id="paymentForm" class="form-container">
+                <h3 id="paymentFormTitle">Thêm Thanh toán</h3>
+                <label for="maThanhToan">Mã Thanh toán:</label>
+                <input type="text" id="maThanhToan" required>
+                <label for="maDonHang">Mã Đơn hàng:</label>
+                <select id="maDonHang" required>
+                    <option value="">Chọn đơn hàng</option>
+                </select>
+                <label for="thoiGian">Thời gian:</label>
+                <input type="datetime-local" id="thoiGian" required>
+                <label for="soTien">Số tiền (VND):</label>
+                <input type="number" id="soTien" min="0" required>
+                <label for="hinhThuc">Hình thức:</label>
+                <select id="hinhThuc" required>
+                    <option value="Tiền mặt">Tiền mặt</option>
+                    <option value="Chuyển khoản">Chuyển khoản</option>
+                </select>
+                <label for="trangThai">Trạng thái:</label>
+                <select id="trangThai" required>
+                    <option value="Đã thanh toán">Đã thanh toán</option>
+                    <option value="Chưa thanh toán">Chưa thanh toán</option>
+                </select>
+                <label for="maGiaoDich">Mã Giao dịch:</label>
+                <input type="text" id="maGiaoDich" placeholder="VD: GD001">
+                <label for="ghiChu">Ghi chú:</label>
+                <textarea id="ghiChu" placeholder="Thông tin bổ sung"></textarea>
+                <button onclick="savePayment()">Lưu</button>
+                <button onclick="cancelPaymentForm()">Hủy</button>
+            </div>
+
+            <div id="refundForm" class="form-container">
+                <h3>Hoàn tiền</h3>
+                <label for="maHoanTien">Mã Hoàn tiền:</label>
+                <input type="text" id="maHoanTien" required>
+                <label for="maThanhToanRefund">Mã Thanh toán:</label>
+                <input type="text" id="maThanhToanRefund" readonly>
+                <label for="thoiGianHoan">Thời gian:</label>
+                <input type="datetime-local" id="thoiGianHoan" required>
+                <label for="soTienHoan">Số tiền hoàn (VND):</label>
+                <input type="number" id="soTienHoan" min="0" required>
+                <label for="lyDo">Lý do hoàn tiền:</label>
+                <textarea id="lyDo" required></textarea>
+                <button onclick="saveRefund()">Lưu</button>
+                <button onclick="cancelRefundForm()">Hủy</button>
+            </div>
+
+            <div class="summary">
+                <p>Tổng số thanh toán: <span id="totalPayments">0</span></p>
+            </div>
+        </div>
+
+        <div id="employeeForm" class="form-container">
+            <h3 id="employeeFormTitle">Thêm Nhân viên</h3>
+            <label for="maNhanVien">Mã Nhân viên:</label>
+            <input type="text" id="maNhanVien" required>
+            <label for="hoTen">Họ tên:</label>
+            <input type="text" id="hoTen" required>
+            <label for="soDienThoai">Số điện thoại:</label>
+            <input type="text" id="soDienThoai" required>
+            <label for="gioiTinh">Giới tính:</label>
+            <select id="gioiTinh" required>
+                <option value="Nam">Nam</option>
+                <option value="Nữ">Nữ</option>
+            </select>
+            <label for="chucVu">Chức vụ:</label>
+            <select id="chucVu" required>
+                <option value="Quản lý">Quản lý</option>
+                <option value="Nhân viên bán hàng">Nhân viên bán hàng</option>
+                <option value="Nhân viên kho">Nhân viên kho</option>
+            </select>
+            <label for="maCuaHang">Mã Cửa hàng:</label>
+            <input type="text" id="maCuaHang" required placeholder="VD: CH001">
+            <label for="ngayVaoLam">Ngày vào làm:</label>
+            <input type="date" id="ngayVaoLam" required>
+            <button onclick="saveEmployee()">Lưu</button>
+            <button onclick="cancelEmployeeForm()">Hủy</button>
+        </div>
+    </div>
+
+    <script>
+        let employees = [];
+        let activities = [];
+        let payments = [];
+        let refunds = [];
+        let orders = [];
+        let products = [];
+        let currentEmployee = null;
+
+        // Load data from localStorage
+        try {
+            employees = JSON.parse(localStorage.getItem('employees')) || [
+                { maNhanVien: 'NV001', hoTen: 'Nguyễn Thị X', soDienThoai: '0912223301', gioiTinh: 'Nữ', chucVu: 'Nhân viên bán hàng', maCuaHang: 'CH001', ngayVaoLam: '2023-01-15' },
+                { maNhanVien: 'NV002', hoTen: 'Trần Văn Y', soDienThoai: '0912223302', gioiTinh: 'Nam', chucVu: 'Nhân viên kho', maCuaHang: 'CH001', ngayVaoLam: '2022-06-20' },
+                { maNhanVien: 'NV003', hoTen: 'Lê Thị Z', soDienThoai: '0912223303', gioiTinh: 'Nữ', chucVu: 'Quản lý', maCuaHang: 'CH002', ngayVaoLam: '2021-03-10' },
+                { maNhanVien: 'NV004', hoTen: 'Phạm Văn T', soDienThoai: '0912223304', gioiTinh: 'Nam', chucVu: 'Nhân viên bán hàng', maCuaHang: 'CH002', ngayVaoLam: '2023-09-05' },
+                { maNhanVien: 'NV005', hoTen: 'Hoàng Thị K', soDienThoai: '0912223305', gioiTinh: 'Nữ', chucVu: 'Nhân viên kho', maCuaHang: 'CH003', ngayVaoLam: '2022-12-01' },
+                { maNhanVien: 'NV006', hoTen: 'Nguyễn Văn L', soDienThoai: '0912223306', gioiTinh: 'Nam', chucVu: 'Nhân viên bán hàng', maCuaHang: 'CH003', ngayVaoLam: '2023-02-10' },
+                { maNhanVien: 'NV007', hoTen: 'Trần Thị M', soDienThoai: '0912223307', gioiTinh: 'Nữ', chucVu: 'Quản lý', maCuaHang: 'CH004', ngayVaoLam: '2021-07-15' },
+                { maNhanVien: 'NV008', hoTen: 'Lê Văn N', soDienThoai: '0912223308', gioiTinh: 'Nam', chucVu: 'Nhân viên kho', maCuaHang: 'CH004', ngayVaoLam: '2022-09-20' },
+                { maNhanVien: 'NV009', hoTen: 'Phạm Thị O', soDienThoai: '0912223309', gioiTinh: 'Nữ', chucVu: 'Nhân viên bán hàng', maCuaHang: 'CH005', ngayVaoLam: '2023-03-25' },
+                { maNhanVien: 'NV010', hoTen: 'Hoàng Văn P', soDienThoai: '0912223310', gioiTinh: 'Nam', chucVu: 'Nhân viên kho', maCuaHang: 'CH005', ngayVaoLam: '2022-11-30' },
+                { maNhanVien: 'NV011', hoTen: 'Nguyễn Thị Q', soDienThoai: '0912223311', gioiTinh: 'Nữ', chucVu: 'Quản lý', maCuaHang: 'CH006', ngayVaoLam: '2021-05-05' },
+                { maNhanVien: 'NV012', hoTen: 'Trần Văn R', soDienThoai: '0912223312', gioiTinh: 'Nam', chucVu: 'Nhân viên bán hàng', maCuaHang: 'CH006', ngayVaoLam: '2023-04-10' },
+                { maNhanVien: 'NV013', hoTen: 'Lê Thị S', soDienThoai: '0912223313', gioiTinh: 'Nữ', chucVu: 'Nhân viên kho', maCuaHang: 'CH007', ngayVaoLam: '2022-08-15' },
+                { maNhanVien: 'NV014', hoTen: 'Phạm Văn T', soDienThoai: '0912223314', gioiTinh: 'Nam', chucVu: 'Nhân viên bán hàng', maCuaHang: 'CH007', ngayVaoLam: '2023-06-20' },
+                { maNhanVien: 'NV015', hoTen: 'Hoàng Thị U', soDienThoai: '0912223315', gioiTinh: 'Nữ', chucVu: 'Quản lý', maCuaHang: 'CH008', ngayVaoLam: '2021-09-25' },
+                { maNhanVien: 'NV016', hoTen: 'Nguyễn Văn V', soDienThoai: '0912223316', gioiTinh: 'Nam', chucVu: 'Nhân viên kho', maCuaHang: 'CH008', ngayVaoLam: '2022-10-30' },
+                { maNhanVien: 'NV017', hoTen: 'Trần Thị W', soDienThoai: '0912223317', gioiTinh: 'Nữ', chucVu: 'Nhân viên bán hàng', maCuaHang: 'CH009', ngayVaoLam: '2023-07-05' },
+                { maNhanVien: 'NV018', hoTen: 'Lê Văn X', soDienThoai: '0912223318', gioiTinh: 'Nam', chucVu: 'Nhân viên kho', maCuaHang: 'CH009', ngayVaoLam: '2022-12-10' },
+                { maNhanVien: 'NV019', hoTen: 'Phạm Thị Y', soDienThoai: '0912223319', gioiTinh: 'Nữ', chucVu: 'Quản lý', maCuaHang: 'CH010', ngayVaoLam: '2021-04-15' },
+                { maNhanVien: 'NV020', hoTen: 'Hoàng Văn Z', soDienThoai: '0912223320', gioiTinh: 'Nam', chucVu: 'Nhân viên bán hàng', maCuaHang: 'CH010', ngayVaoLam: '2023-08-20' }
+            ];
+            activities = JSON.parse(localStorage.getItem('activities')) || [];
+            payments = JSON.parse(localStorage.getItem('payments')) || [
+                { maThanhToan: 'TT001', maDonHang: 'DH001', thoiGian: '2025-05-01T10:00:00Z', soTien: 4500000, hinhThuc: 'Tiền mặt', trangThai: 'Đã thanh toán', maGiaoDich: 'GD001', ghiChu: 'Thanh toán tại cửa hàng' },
+                { maThanhToan: 'TT002', maDonHang: 'DH002', thoiGian: '2025-06-15T10:00:00Z', soTien: 0, hinhThuc: 'Chưa thanh toán', trangThai: 'Chưa thanh toán', maGiaoDich: null, ghiChu: 'Đang chờ xử lý' },
+                { maThanhToan: 'TT003', maDonHang: 'DH003', thoiGian: '2025-05-03T11:00:00Z', soTien: 850000, hinhThuc: 'Chuyển khoản', trangThai: 'Đã thanh toán', maGiaoDich: 'GD003', ghiChu: 'Chuyển khoản Momo' },
+                { maThanhToan: 'TT004', maDonHang: 'DH004', thoiGian: '2025-06-15T11:00:00Z', soTien: 0, hinhThuc: 'Chưa thanh toán', trangThai: 'Chưa thanh toán', maGiaoDich: null, ghiChu: 'Đơn hàng bị hủy' },
+                { maThanhToan: 'TT005', maDonHang: 'DH005', thoiGian: '2025-05-05T12:00:00Z', soTien: 1500000, hinhThuc: 'Chuyển khoản', trangThai: 'Đã thanh toán', maGiaoDich: 'GD005', ghiChu: 'Chuyển khoản ZaloPay' },
+                { maThanhToan: 'TT006', maDonHang: 'DH006', thoiGian: '2025-05-06T13:00:00Z', soTien: 3200000, hinhThuc: 'Tiền mặt', trangThai: 'Đã thanh toán', maGiaoDich: 'GD006', ghiChu: 'Thanh toán tại cửa hàng' },
+                { maThanhToan: 'TT007', maDonHang: 'DH007', thoiGian: '2025-05-07T14:00:00Z', soTien: 1800000, hinhThuc: 'Chuyển khoản', trangThai: 'Đã thanh toán', maGiaoDich: 'GD007', ghiChu: 'Chuyển khoản ngân hàng' },
+                { maThanhToan: 'TT008', maDonHang: 'DH008', thoiGian: '2025-06-15T14:00:00Z', soTien: 0, hinhThuc: 'Chưa thanh toán', trangThai: 'Chưa thanh toán', maGiaoDich: null, ghiChu: 'Đang chờ xử lý' },
+                { maThanhToan: 'TT009', maDonHang: 'DH009', thoiGian: '2025-05-09T15:00:00Z', soTien: 2500000, hinhThuc: 'Tiền mặt', trangThai: 'Đã thanh toán', maGiaoDich: 'GD009', ghiChu: 'Thanh toán tại cửa hàng' },
+                { maThanhToan: 'TT010', maDonHang: 'DH010', thoiGian: '2025-05-10T16:00:00Z', soTien: 3500000, hinhThuc: 'Chuyển khoản', trangThai: 'Đã thanh toán', maGiaoDich: 'GD010', ghiChu: 'Chuyển khoản Momo' },
+                { maThanhToan: 'TT011', maDonHang: 'DH011', thoiGian: '2025-06-15T16:00:00Z', soTien: 0, hinhThuc: 'Chưa thanh toán', trangThai: 'Chưa thanh toán', maGiaoDich: null, ghiChu: 'Đơn hàng bị hủy' },
+                { maThanhToan: 'TT012', maDonHang: 'DH012', thoiGian: '2025-05-12T17:00:00Z', soTien: 2000000, hinhThuc: 'Tiền mặt', trangThai: 'Đã thanh toán', maGiaoDich: 'GD012', ghiChu: 'Thanh toán tại cửa hàng' },
+                { maThanhToan: 'TT013', maDonHang: 'DH013', thoiGian: '2025-06-15T17:00:00Z', soTien: 0, hinhThuc: 'Chưa thanh toán', trangThai: 'Chưa thanh toán', maGiaoDich: null, ghiChu: 'Đang chờ xử lý' },
+                { maThanhToan: 'TT014', maDonHang: 'DH014', thoiGian: '2025-05-14T18:00:00Z', soTien: 4200000, hinhThuc: 'Chuyển khoản', trangThai: 'Đã thanh toán', maGiaoDich: 'GD014', ghiChu: 'Chuyển khoản ZaloPay' },
+                { maThanhToan: 'TT015', maDonHang: 'DH015', thoiGian: '2025-05-15T19:00:00Z', soTien: 3800000, hinhThuc: 'Tiền mặt', trangThai: 'Đã thanh toán', maGiaoDich: 'GD015', ghiChu: 'Thanh toán tại cửa hàng' },
+                { maThanhToan: 'TT016', maDonHang: 'DH016', thoiGian: '2025-05-16T10:00:00Z', soTien: 4000000, hinhThuc: 'Chuyển khoản', trangThai: 'Đã thanh toán', maGiaoDich: 'GD016', ghiChu: 'Chuyển khoản ngân hàng' },
+                { maThanhToan: 'TT017', maDonHang: 'DH017', thoiGian: '2025-06-15T10:00:00Z', soTien: 0, hinhThuc: 'Chưa thanh toán', trangThai: 'Chưa thanh toán', maGiaoDich: null, ghiChu: 'Đang chờ xử lý' },
+                { maThanhToan: 'TT018', maDonHang: 'DH018', thoiGian: '2025-05-18T11:00:00Z', soTien: 900000, hinhThuc: 'Tiền mặt', trangThai: 'Đã thanh toán', maGiaoDich: 'GD018', ghiChu: 'Thanh toán tại cửa hàng' },
+                { maThanhToan: 'TT019', maDonHang: 'DH019', thoiGian: '2025-06-15T11:00:00Z', soTien: 0, hinhThuc: 'Chưa thanh toán', trangThai: 'Chưa thanh toán', maGiaoDich: null, ghiChu: 'Đơn hàng bị hủy' },
+                { maThanhToan: 'TT020', maDonHang: 'DH020', thoiGian: '2025-05-20T12:00:00Z', soTien: 1700000, hinhThuc: 'Chuyển khoản', trangThai: 'Đã thanh toán', maGiaoDich: 'GD020', ghiChu: 'Chuyển khoản Momo' },
+                { maThanhToan: 'TT021', maDonHang: 'DH021', thoiGian: '2025-05-21T13:00:00Z', soTien: 3100000, hinhThuc: 'Tiền mặt', trangThai: 'Đã thanh toán', maGiaoDich: 'GD021', ghiChu: 'Thanh toán tại cửa hàng' },
+                { maThanhToan: 'TT022', maDonHang: 'DH022', thoiGian: '2025-06-15T13:00:00Z', soTien: 0, hinhThuc: 'Chưa thanh toán', trangThai: 'Chưa thanh toán', maGiaoDich: null, ghiChu: 'Đang chờ xử lý' },
+                { maThanhToan: 'TT023', maDonHang: 'DH023', thoiGian: '2025-05-23T14:00:00Z', soTien: 4100000, hinhThuc: 'Chuyển khoản', trangThai: 'Đã thanh toán', maGiaoDich: 'GD023', ghiChu: 'Chuyển khoản ZaloPay' },
+                { maThanhToan: 'TT024', maDonHang: 'DH024', thoiGian: '2025-05-24T15:00:00Z', soTien: 2600000, hinhThuc: 'Tiền mặt', trangThai: 'Đã thanh toán', maGiaoDich: 'GD024', ghiChu: 'Thanh toán tại cửa hàng' },
+                { maThanhToan: 'TT025', maDonHang: 'DH025', thoiGian: '2025-05-25T16:00:00Z', soTien: 3400000, hinhThuc: 'Chuyển khoản', trangThai: 'Đã thanh toán', maGiaoDich: 'GD025', ghiChu: 'Chuyển khoản ngân hàng' },
+                { maThanhToan: 'TT026', maDonHang: 'DH026', thoiGian: '2025-06-15T16:00:00Z', soTien: 0, hinhThuc: 'Chưa thanh toán', trangThai: 'Chưa thanh toán', maGiaoDich: null, ghiChu: 'Đang chờ xử lý' },
+                { maThanhToan: 'TT027', maDonHang: 'DH027', thoiGian: '2025-05-27T17:00:00Z', soTien: 2100000, hinhThuc: 'Tiền mặt', trangThai: 'Đã thanh toán', maGiaoDich: 'GD027', ghiChu: 'Thanh toán tại cửa hàng' },
+                { maThanhToan: 'TT028', maDonHang: 'DH028', thoiGian: '2025-06-15T17:00:00Z', soTien: 0, hinhThuc: 'Chưa thanh toán', trangThai: 'Chưa thanh toán', maGiaoDich: null, ghiChu: 'Đơn hàng bị hủy' },
+                { maThanhToan: 'TT029', maDonHang: 'DH029', thoiGian: '2025-05-29T18:00:00Z', soTien: 4300000, hinhThuc: 'Chuyển khoản', trangThai: 'Đã thanh toán', maGiaoDich: 'GD029', ghiChu: 'Chuyển khoản Momo' },
+                { maThanhToan: 'TT030', maDonHang: 'DH030', thoiGian: '2025-05-30T19:00:00Z', soTien: 3900000, hinhThuc: 'Tiền mặt', trangThai: 'Đã thanh toán', maGiaoDich: 'GD030', ghiChu: 'Thanh toán tại cửa hàng' }
+            ];
+            refunds = JSON.parse(localStorage.getItem('refunds')) || [];
+            orders = JSON.parse(localStorage.getItem('orders')) || [
+                { maDonHang: 'DH001', maKhachHang: 'KH001', ngayDat: '2025-05-01', items: [{ maSanPham: 'SP001', size: 40, color: 'Đen', quantity: 1, giaBan: 4500000 }], tongTien: 4500000, trangThai: 'Đã xác nhận' },
+                { maDonHang: 'DH002', maKhachHang: 'KH002', ngayDat: '2025-06-15', items: [{ maSanPham: 'SP002', size: 39, color: 'Xanh', quantity: 1, giaBan: 800000 }], tongTien: 800000, trangThai: 'Đang xử lý' },
+                { maDonHang: 'DH003', maKhachHang: 'KH003', ngayDat: '2025-05-03', items: [{ maSanPham: 'SP002', size: 40, color: 'Đen', quantity: 1, giaBan: 850000 }], tongTien: 850000, trangThai: 'Đã xác nhận' },
+                { maDonHang: 'DH004', maKhachHang: 'KH004', ngayDat: '2025-06-15', items: [{ maSanPham: 'SP001', size: 41, color: 'Trắng', quantity: 1, giaBan: 4500000 }], tongTien: 4500000, trangThai: 'Đã hủy' },
+                { maDonHang: 'DH005', maKhachHang: 'KH005', ngayDat: '2025-05-05', items: [{ maSanPham: 'SP001', size: 40, color: 'Đen', quantity: 1, giaBan: 1500000 }], tongTien: 1500000, trangThai: 'Đã xác nhận' },
+                { maDonHang: 'DH006', maKhachHang: 'KH006', ngayDat: '2025-05-06', items: [{ maSanPham: 'SP001', size: 40, color: 'Đen', quantity: 1, giaBan: 3200000 }], tongTien: 3200000, trangThai: 'Đã xác nhận' },
+                { maDonHang: 'DH007', maKhachHang: 'KH007', ngayDat: '2025-05-07', items: [{ maSanPham: 'SP002', size: 39, color: 'Xanh', quantity: 1, giaBan: 1800000 }], tongTien: 1800000, trangThai: 'Đã xác nhận' },
+                { maDonHang: 'DH008', maKhachHang: 'KH008', ngayDat: '2025-06-15', items: [{ maSanPham: 'SP001', size: 41, color: 'Trắng', quantity: 1, giaBan: 2500000 }], tongTien: 2500000, trangThai: 'Đang xử lý' },
+                { maDonHang: 'DH009', maKhachHang: 'KH009', ngayDat: '2025-05-09', items: [{ maSanPham: 'SP001', size: 40, color: 'Đen', quantity: 1, giaBan: 2500000 }], tongTien: 2500000, trangThai: 'Đã xác nhận' },
+                { maDonHang: 'DH010', maKhachHang: 'KH010', ngayDat: '2025-05-10', items: [{ maSanPham: 'SP002', size: 40, color: 'Đen', quantity: 1, giaBan: 3500000 }], tongTien: 3500000, trangThai: 'Đã xác nhận' },
+                { maDonHang: 'DH011', maKhachHang: 'KH011', ngayDat: '2025-06-15', items: [{ maSanPham: 'SP001', size: 40, color: 'Đen', quantity: 1, giaBan: 2000000 }], tongTien: 2000000, trangThai: 'Đã hủy' },
+                { maDonHang: 'DH012', maKhachHang: 'KH012', ngayDat: '2025-05-12', items: [{ maSanPham: 'SP002', size: 39, color: 'Xanh', quantity: 1, giaBan: 2000000 }], tongTien: 2000000, trangThai: 'Đã xác nhận' },
+                { maDonHang: 'DH013', maKhachHang: 'KH013', ngayDat: '2025-06-15', items: [{ maSanPham: 'SP001', size: 41, color: 'Trắng', quantity: 1, giaBan: 4200000 }], tongTien: 4200000, trangThai: 'Đang xử lý' },
+                { maDonHang: 'DH014', maKhachHang: 'KH014', ngayDat: '2025-05-14', items: [{ maSanPham: 'SP001', size: 40, color: 'Đen', quantity: 1, giaBan: 4200000 }], tongTien: 4200000, trangThai: 'Đã xác nhận' },
+                { maDonHang: 'DH015', maKhachHang: 'KH015', ngayDat: '2025-05-15', items: [{ maSanPham: 'SP002', size: 40, color: 'Đen', quantity: 1, giaBan: 3800000 }], tongTien: 3800000, trangThai: 'Đã xác nhận' },
+                { maDonHang: 'DH016', maKhachHang: 'KH016', ngayDat: '2025-05-16', items: [{ maSanPham: 'SP001', size: 40, color: 'Đen', quantity: 1, giaBan: 4000000 }], tongTien: 4000000, trangThai: 'Đã xác nhận' },
+                { maDonHang: 'DH017', maKhachHang: 'KH017', ngayDat: '2025-06-15', items: [{ maSanPham: 'SP002', size: 39, color: 'Xanh', quantity: 1, giaBan: 900000 }], tongTien: 900000, trangThai: 'Đang xử lý' },
+                { maDonHang: 'DH018', maKhachHang: 'KH018', ngayDat: '2025-05-18', items: [{ maSanPham: 'SP001', size: 41, color: 'Trắng', quantity: 1, giaBan: 900000 }], tongTien: 900000, trangThai: 'Đã xác nhận' },
+                { maDonHang: 'DH019', maKhachHang: 'KH019', ngayDat: '2025-06-15', items: [{ maSanPham: 'SP002', size: 40, color: 'Đen', quantity: 1, giaBan: 1700000 }], tongTien: 1700000, trangThai: 'Đã hủy' },
+                { maDonHang: 'DH020', maKhachHang: 'KH020', ngayDat: '2025-05-20', items: [{ maSanPham: 'SP001', size: 40, color: 'Đen', quantity: 1, giaBan: 1700000 }], tongTien: 1700000, trangThai: 'Đã xác nhận' },
+                { maDonHang: 'DH021', maKhachHang: 'KH021', ngayDat: '2025-05-21', items: [{ maSanPham: 'SP002', size: 39, color: 'Xanh', quantity: 1, giaBan: 3100000 }], tongTien: 3100000, trangThai: 'Đã xác nhận' },
+                { maDonHang: 'DH022', maKhachHang: 'KH022', ngayDat: '2025-06-15', items: [{ maSanPham: 'SP001', size: 40, color: 'Đen', quantity: 1, giaBan: 4100000 }], tongTien: 4100000, trangThai: 'Đang xử lý' },
+                { maDonHang: 'DH023', maKhachHang: 'KH023', ngayDat: '2025-05-23', items: [{ maSanPham: 'SP002', size: 40, color: 'Đen', quantity: 1, giaBan: 4100000 }], tongTien: 4100000, trangThai: 'Đã xác nhận' },
+                { maDonHang: 'DH024', maKhachHang: 'KH024', ngayDat: '2025-05-24', items: [{ maSanPham: 'SP001', size: 41, color: 'Trắng', quantity: 1, giaBan: 2600000 }], tongTien: 2600000, trangThai: 'Đã xác nhận' },
+                { maDonHang: 'DH025', maKhachHang: 'KH025', ngayDat: '2025-05-25', items: [{ maSanPham: 'SP002', size: 39, color: 'Xanh', quantity: 1, giaBan: 3400000 }], tongTien: 3400000, trangThai: 'Đã xác nhận' },
+                { maDonHang: 'DH026', maKhachHang: 'KH026', ngayDat: '2025-06-15', items: [{ maSanPham: 'SP001', size: 40, color: 'Đen', quantity: 1, giaBan: 2100000 }], tongTien: 2100000, trangThai: 'Đang xử lý' },
+                { maDonHang: 'DH027', maKhachHang: 'KH027', ngayDat: '2025-05-27', items: [{ maSanPham: 'SP002', size: 40, color: 'Đen', quantity: 1, giaBan: 2100000 }], tongTien: 2100000, trangThai: 'Đã xác nhận' },
+                { maDonHang: 'DH028', maKhachHang: 'KH028', ngayDat: '2025-06-15', items: [{ maSanPham: 'SP001', size: 41, color: 'Trắng', quantity: 1, giaBan: 4300000 }], tongTien: 4300000, trangThai: 'Đã hủy' },
+                { maDonHang: 'DH029', maKhachHang: 'KH029', ngayDat: '2025-05-29', items: [{ maSanPham: 'SP002', size: 39, color: 'Xanh', quantity: 1, giaBan: 4300000 }], tongTien: 4300000, trangThai: 'Đã xác nhận' },
+                { maDonHang: 'DH030', maKhachHang: 'KH030', ngayDat: '2025-05-30', items: [{ maSanPham: 'SP001', size: 40, color: 'Đen', quantity: 1, giaBan: 3900000 }], tongTien: 3900000, trangThai: 'Đã xác nhận' }
+            ];
+            products = JSON.parse(localStorage.getItem('products')) || [
+                { maSanPham: 'SP001', tenSanPham: 'Adidas Ultraboost 21', loaiGiay: 'Giày thể thao', giaBan: 4500000, variants: [{ size: 40, color: 'Đen', stock: 10 }, { size: 41, color: 'Trắng', stock: 5 }] },
+                { maSanPham: 'SP002', tenSanPham: 'Bitis Hunter X', loaiGiay: 'Sneaker', giaBan: 800000, variants: [{ size: 39, color: 'Xanh', stock: 8 }, { size: 40, color: 'Đen', stock: 12 }] }
+            ];
+        } catch (e) {
+            alert('Lỗi khi tải dữ liệu: ' + e.message);
+        }
+
+        let sortDirection = 1;
+        let lastSortedColumn = '';
+
+        function login() {
+            const maNhanVien = document.getElementById('maNhanVienLogin').value.trim();
+            const employee = employees.find(e => e.maNhanVien === maNhanVien);
+            if (!employee) {
+                document.getElementById('loginError').style.display = 'block';
+                return;
+            }
+
+            currentEmployee = employee;
+            document.getElementById('loginContainer').style.display = 'none';
+            document.getElementById('mainContainer').style.display = 'block';
+            document.getElementById('currentUser').textContent = `${employee.hoTen} (${employee.chucVu})`;
+            updateTabsByRole(employee.chucVu);
+            logActivity('Đăng nhập', `Nhân viên ${employee.hoTen} đăng nhập`);
+            renderEmployees();
+        }
+
+        function logout() {
+            if (currentEmployee) {
+                logActivity('Đăng xuất', `Nhân viên ${currentEmployee.hoTen} đăng xuất`);
+            }
+            currentEmployee = null;
+            document.getElementById('loginContainer').style.display = 'block';
+            document.getElementById('mainContainer').style.display = 'none';
+            document.getElementById('maNhanVienLogin').value = '';
+            document.getElementById('loginError').style.display = 'none';
+        }
+
+        function updateTabsByRole(chucVu) {
+            const tabs = document.getElementById('tabs');
+            tabs.innerHTML = '';
+            if (chucVu === 'Quản lý') {
+                tabs.innerHTML = `
+                    <button id="tabEmployees" class="active" onclick="showTab('employees')">Nhân viên</button>
+                    <button id="tabActivity" onclick="showTab('activity')">Lịch sử Hoạt động</button>
+                    <button id="tabProducts" onclick="showTab('products')">Sản phẩm</button>
+                    <button id="tabInventory" onclick="showTab('inventory')">Tồn kho</button>
+                    <button id="tabCustomers" onclick="showTab('customers')">Khách hàng</button>
+                    <button id="tabOrders" onclick="showTab('orders')">Đơn hàng</button>
+                    <button id="tabPayments" onclick="showTab('payments')">Thanh toán</button>
+                `;
+                showTab('employees');
+            } else if (chucVu === 'Nhân viên bán hàng') {
+                tabs.innerHTML = `
+                    <button id="tabProducts" class="active" onclick="showTab('products')">Sản phẩm</button>
+                    <button id="tabCustomers" onclick="showTab('customers')">Khách hàng</button>
+                    <button id="tabOrders" onclick="showTab('orders')">Đơn hàng</button>
+                    <button id="tabPayments" onclick="showTab('payments')">Thanh toán</button>
+                `;
+                showTab('products');
+            } else if (chucVu === 'Nhân viên kho') {
+                tabs.innerHTML = `
+                    <button id="tabInventory" class="active" onclick="showTab('inventory')">Tồn kho</button>
+                `;
+                showTab('inventory');
+            }
+        }
+
+        function showTab(tabId) {
+            document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
+            document.querySelectorAll('.tabs button').forEach(btn => btn.classList.remove('active'));
+            document.getElementById(tabId).classList.add('active');
+            document.getElementById(`tab${tabId.charAt(0).toUpperCase() + tabId.slice(1)}`).classList.add('active');
+
+            if (tabId === 'employees') renderEmployees();
+            else if (tabId === 'activity') renderActivity();
+            else if (tabId === 'payments') renderPayments();
+            else logActivity('Xem', `Xem danh sách ${tabId}`);
+        }
+
+        function sortTable(column) {
+            if (lastSortedColumn === column) {
+                sortDirection *= -1;
+            } else {
+                sortDirection = 1;
+            }
+            lastSortedColumn = column;
+
+            employees.sort((a, b) => {
+                const valA = (a[column] || '').toString().toLowerCase();
+                const valB = (b[column] || '').toString().toLowerCase();
+                return valA > valB ? sortDirection : valA < valB ? -sortDirection : 0;
+            });
+
+            renderEmployees();
+        }
+
+        function sortActivity(column) {
+            if (lastSortedColumn === column) {
+                sortDirection *= -1;
+            } else {
+                sortDirection = 1;
+            }
+            lastSortedColumn = column;
+
+            activities.sort((a, b) => {
+                let valA = a[column];
+                let valB = b[column];
+                if (column === 'thoiGian') {
+                    valA = new Date(valA);
+                    valB = new Date(valB);
+                } else {
+                    valA = (valA || '').toString().toLowerCase();
+                    valB = (valB || '').toString().toLowerCase();
+                }
+                return valA > valB ? sortDirection : valA < valB ? -sortDirection : 0;
+            });
+
+            renderActivity();
+        }
+
+        function renderEmployees() {
+            if (currentEmployee.chucVu !== 'Quản lý') return;
+            const employeeBody = document.getElementById('employeeBody');
+            employeeBody.innerHTML = '';
+
+            employees.forEach(employee => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${employee.maNhanVien}</td>
+                    <td>${employee.hoTen}</td>
+                    <td>${employee.soDienThoai}</td>
+                    <td>${employee.gioiTinh}</td>
+                    <td>${employee.chucVu}</td>
+                    <td>${employee.maCuaHang}</td>
+                    <td>${new Date(employee.ngayVaoLam).toLocaleDateString('vi-VN')}</td>
+                    <td class="actions">
+                        <button class="edit-btn" aria-label="Sửa nhân viên ${employee.hoTen}" onclick="editEmployee('${employee.maNhanVien}')">Sửa</button>
+                        <button class="delete-btn" aria-label="Xóa nhân viên ${employee.hoTen}" onclick="deleteEmployee('${employee.maNhanVien}')">Xóa</button>
+                    </td>
+                `;
+                employeeBody.appendChild(row);
+            });
+
+            document.getElementById('totalEmployees').textContent = employees.length;
+        }
+
+        function renderActivity() {
+            if (currentEmployee.chucVu !== 'Quản lý') return;
+            const activityBody = document.getElementById('activityBody');
+            activityBody.innerHTML = '';
+
+            activities.forEach(activity => {
+                const employee = employees.find(e => e.maNhanVien === activity.maNhanVien);
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${new Date(activity.thoiGian).toLocaleString('vi-VN')}</td>
+                    <td>${employee ? employee.hoTen : activity.maNhanVien}</td>
+                    <td>${activity.loaiHanhDong}</td>
+                    <td>${activity.chiTiet}</td>
+                `;
+                activityBody.appendChild(row);
+            });
+        }
+
+        function showEmployeeForm() {
+            if (currentEmployee.chucVu !== 'Quản lý') {
+                alert('Bạn không có quyền thực hiện hành động này.');
+                return;
+            }
+            document.getElementById('employeeForm').style.display = 'block';
+            document.getElementById('employeeFormTitle').textContent = 'Thêm Nhân viên';
+            document.getElementById('maNhanVien').value = `NV${String(employees.length + 1).padStart(3, '0')}`;
+            document.getElementById('hoTen').value = '';
+            document.getElementById('soDienThoai').value = '';
+            document.getElementById('gioiTinh').value = 'Nam';
+            document.getElementById('chucVu').value = 'Nhân viên bán hàng';
+            document.getElementById('maCuaHang').value = '';
+            document.getElementById('ngayVaoLam').value = new Date().toISOString().split('T')[0];
+        }
+
+        function editEmployee(maNhanVien) {
+            if (currentEmployee.chucVu !== 'Quản lý') {
+                alert('Bạn không có quyền thực hiện hành động này.');
+                return;
+            }
+            const employee = employees.find(e => e.maNhanVien === maNhanVien);
+            document.getElementById('employeeForm').style.display = 'block';
+            document.getElementById('employeeFormTitle').textContent = 'Sửa Nhân viên';
+            document.getElementById('maNhanVien').value = employee.maNhanVien;
+            document.getElementById('hoTen').value = employee.hoTen;
+            document.getElementById('soDienThoai').value = employee.soDienThoai;
+            document.getElementById('gioiTinh').value = employee.gioiTinh;
+            document.getElementById('chucVu').value = employee.chucVu;
+            document.getElementById('maCuaHang').value = employee.maCuaHang;
+            document.getElementById('ngayVaoLam').value = employee.ngayVaoLam;
+        }
+
+        function saveEmployee() {
+            if (currentEmployee.chucVu !== 'Quản lý') {
+                alert('Bạn không có quyền thực hiện hành động này.');
+                return;
+            }
+            const maNhanVien = document.getElementById('maNhanVien').value.trim();
+            const hoTen = document.getElementById('hoTen').value.trim();
+            const soDienThoai = document.getElementById('soDienThoai').value.trim();
+            const gioiTinh = document.getElementById('gioiTinh').value;
+            const chucVu = document.getElementById('chucVu').value;
+            const maCuaHang = document.getElementById('maCuaHang').value.trim();
+            const ngayVaoLam = document.getElementById('ngayVaoLam').value;
+
+            if (!maNhanVien || !hoTen || !soDienThoai || !gioiTinh || !chucVu || !maCuaHang || !ngayVaoLam) {
+                alert('Vui lòng điền đầy đủ thông tin.');
+                return;
+            }
+
+            const phoneRegex = /^\d{10}$/;
+            if (!phoneRegex.test(soDienThoai)) {
+                alert('Số điện thoại phải có 10 chữ số.');
+                return;
+            }
+
+            const storeRegex = /^CH\d{3}$/;
+            if (!storeRegex.test(maCuaHang)) {
+                alert('Mã cửa hàng phải có định dạng CHxxx (ví dụ: CH001).');
+                return;
+            }
+
+            const existingEmployeeIndex = employees.findIndex(e => e.maNhanVien === maNhanVien);
+            if (existingEmployeeIndex === -1 && employees.some(e => e.maNhanVien === maNhanVien)) {
+                alert('Mã nhân viên đã tồn tại.');
+                return;
+            }
+
+            const employee = { maNhanVien, hoTen, soDienThoai, gioiTinh, chucVu, maCuaHang, ngayVaoLam };
+            try {
+                if (existingEmployeeIndex !== -1) {
+                    employees[existingEmployeeIndex] = employee;
+                    logActivity('Sửa nhân viên', `Sửa thông tin nhân viên ${maNhanVien}`);
+                } else {
+                    employees.push(employee);
+                    logActivity('Thêm nhân viên', `Thêm nhân viên ${maNhanVien}`);
+                }
+                localStorage.setItem('employees', JSON.stringify(employees));
+                document.getElementById('employeeForm').style.display = 'none';
+                renderEmployees();
+            } catch (e) {
+                alert('Lỗi khi lưu dữ liệu: ' + e.message);
+            }
+        }
+
+        function deleteEmployee(maNhanVien) {
+            if (currentEmployee.chucVu !== 'Quản lý') {
+                alert('Bạn không có quyền thực hiện hành động này.');
+                return;
+            }
+            if (maNhanVien === currentEmployee.maNhanVien) {
+                alert('Không thể xóa tài khoản đang đăng nhập.');
+                return;
+            }
+            if (confirm('Bạn có chắc muốn xóa nhân viên này?')) {
+                employees = employees.filter(e => e.maNhanVien !== maNhanVien);
+                try {
+                    localStorage.setItem('employees', JSON.stringify(employees));
+                    logActivity('Xóa nhân viên', `Xóa nhân viên ${maNhanVien}`);
+                    renderEmployees();
+                } catch (e) {
+                    alert('Lỗi khi xóa dữ liệu: ' + e.message);
+                }
+            }
+        }
+
+        function cancelEmployeeForm() {
+            document.getElementById('employeeForm').style.display = 'none';
+        }
+
+        function sortPayments(column) {
+            if (lastSortedColumn === column) {
+                sortDirection *= -1;
+            } else {
+                sortDirection = 1;
+            }
+            lastSortedColumn = column;
+
+            payments.sort((a, b) => {
+                let valA = a[column] || '';
+                let valB = b[column] || '';
+                if (column === 'thoiGian') {
+                    valA = new Date(valA);
+                    valB = new Date(valB);
+                } else if (column === 'soTien') {
+                    valA = parseInt(valA);
+                    valB = parseInt(valB);
+                } else {
+                    valA = valA.toString().toLowerCase();
+                    valB = valB.toString().toLowerCase();
+                }
+                return valA > valB ? sortDirection : valA < valB ? -sortDirection : 0;
+            });
+
+            renderPayments();
+        }
+
+        function renderPayments() {
+            const paymentBody = document.getElementById('paymentBody');
+            paymentBody.innerHTML = '';
+            const filterStatus = document.getElementById('filterStatus').value;
+
+            const filteredPayments = payments.filter(payment => !filterStatus || payment.trangThai === filterStatus);
+
+            filteredPayments.forEach(payment => {
+                const order = orders.find(o => o.maDonHang === payment.maDonHang);
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${payment.maThanhToan}</td>
+                    <td>${payment.maDonHang}</td>
+                    <td>${new Date(payment.thoiGian).toLocaleString('vi-VN')}</td>
+                    <td>${payment.soTien.toLocaleString('vi-VN')}</td>
+                    <td>${payment.hinhThuc}</td>
+                    <td>${payment.trangThai}</td>
+                    <td>${payment.maGiaoDich || '-'}</td>
+                    <td>${payment.ghiChu || '-'}</td>
+                    <td class="actions">
+                        <button class="edit-btn" aria-label="Sửa thanh toán ${payment.maThanhToan}" onclick="editPayment('${payment.maThanhToan}')" ${payment.trangThai === 'Hoàn tiền' || currentEmployee.chucVu !== 'Quản lý' ? 'disabled' : ''}>Sửa</button>
+                        <button class="refund-btn" aria-label="Hoàn tiền ${payment.maThanhToan}" onclick="showRefundForm('${payment.maThanhToan}')" ${payment.trangThai !== 'Đã thanh toán' || currentEmployee.chucVu !== 'Quản lý' ? 'disabled' : ''}>Hoàn tiền</button>
+                    </td>
+                `;
+                paymentBody.appendChild(row);
+            });
+
+            document.getElementById('totalPayments').textContent = filteredPayments.length;
+        }
+
+        function showPaymentForm() {
+            if (currentEmployee.chucVu !== 'Quản lý') {
+                alert('Bạn không có quyền thực hiện hành động này.');
+                return;
+            }
+            document.getElementById('paymentForm').style.display = 'block';
+            document.getElementById('paymentFormTitle').textContent = 'Thêm Thanh toán';
+            document.getElementById('maThanhToan').value = `TT${String(payments.length + 1).padStart(3, '0')}`;
+            document.getElementById('thoiGian').value = new Date().toISOString().slice(0, 16);
+            document.getElementById('soTien').value = '';
+            document.getElementById('hinhThuc').value = 'Tiền mặt';
+            document.getElementById('trangThai').value = 'Chưa thanh toán';
+            document.getElementById('maGiaoDich').value = '';
+            document.getElementById('ghiChu').value = '';
+
+            const orderSelect = document.getElementById('maDonHang');
+            orderSelect.innerHTML = '<option value="">Chọn đơn hàng</option>';
+            orders.filter(o => o.trangThai !== 'Đã hủy').forEach(o => {
+                if (!payments.some(p => p.maDonHang === o.maDonHang && p.trangThai !== 'Hoàn tiền')) {
+                    orderSelect.innerHTML += `<option value="${o.maDonHang}">${o.maDonHang} (Tổng: ${o.tongTien.toLocaleString('vi-VN')} VND)</option>`;
+                }
+            });
+        }
+
+        function editPayment(maThanhToan) {
+            if (currentEmployee.chucVu !== 'Quản lý') {
+                alert('Bạn không có quyền thực hiện hành động này.');
+                return;
+            }
+            const payment = payments.find(p => p.maThanhToan === maThanhToan);
+            document.getElementById('paymentForm').style.display = 'block';
+            document.getElementById('paymentFormTitle').textContent = 'Sửa Thanh toán';
+            document.getElementById('maThanhToan').value = payment.maThanhToan;
+            document.getElementById('maDonHang').innerHTML = `<option value="${payment.maDonHang}">${payment.maDonHang}</option>`;
+            document.getElementById('thoiGian').value = new Date(payment.thoiGian).toISOString().slice(0, 16);
+            document.getElementById('soTien').value = payment.soTien;
+            document.getElementById('hinhThuc').value = payment.hinhThuc;
+            document.getElementById('trangThai').value = payment.trangThai;
+            document.getElementById('maGiaoDich').value = payment.maGiaoDich || '';
+            document.getElementById('ghiChu').value = payment.ghiChu || '';
+        }
+
+        function savePayment() {
+            if (currentEmployee.chucVu !== 'Quản lý' && currentEmployee.chucVu !== 'Nhân viên bán hàng') {
+                alert('Bạn không có quyền thực hiện hành động này.');
+                return;
+            }
+
+            const maThanhToan = document.getElementById('maThanhToan').value.trim();
+            const maDonHang = document.getElementById('maDonHang').value;
+            const thoiGian = document.getElementById('thoiGian').value;
+            const soTien = parseInt(document.getElementById('soTien').value);
+            const hinhThuc = document.getElementById('hinhThuc').value;
+            const trangThai = document.getElementById('trangThai').value;
+            const maGiaoDich = document.getElementById('maGiaoDich').value.trim() || null;
+            const ghiChu = document.getElementById('ghiChu').value.trim() || null;
+
+            // Validation
+            if (!maThanhToan || !maDonHang || !thoiGian || isNaN(soTien) || soTien < 0 || !hinhThuc || !trangThai) {
+                alert('Vui lòng điền đầy đủ thông tin hợp lệ.');
+                return;
+            }
+
+            const order = orders.find(o => o.maDonHang === maDonHang);
+            if (!order) {
+                alert('Đơn hàng không tồn tại.');
+                return;
+            }
+
+            if (trangThai === 'Đã thanh toán' && soTien !== order.tongTien) {
+                alert(`Số tiền thanh toán (${soTien.toLocaleString('vi-VN')} VND) phải khớp với tổng tiền đơn hàng (${order.tongTien.toLocaleString('vi-VN')} VND).`);
+                return;
+            }
+
+            if (order.trangThai === 'Đã hủy') {
+                alert('Không thể thanh toán cho đơn hàng đã hủy.');
+                return;
+            }
+
+            const existingPaymentIndex = payments.findIndex(p => p.maThanhToan === maThanhToan);
+            if (existingPaymentIndex === -1 && payments.some(p => p.maThanhToan === maThanhToan)) {
+                alert('Mã thanh toán đã tồn tại.');
+                return;
+            }
+
+            if (maGiaoDich && payments.some(p => p.maGiaoDich === maGiaoDich && p.maThanhToan !== maThanhToan)) {
+                alert('Mã giao dịch đã tồn tại.');
+                return;
+            }
+
+            if (existingPaymentIndex === -1 && payments.some(p => p.maDonHang === maDonHang && p.trangThai === 'Đã thanh toán')) {
+                alert('Đơn hàng này đã được thanh toán.');
+                return;
+            }
+
+            try {
+                const payment = { maThanhToan, maDonHang, thoiGian, soTien, hinhThuc, trangThai, maGiaoDich, ghiChu };
+
+                if (existingPaymentIndex !== -1) {
+                    payments[existingPaymentIndex] = payment;
+                    logActivity('Sửa thanh toán', `Sửa thanh toán ${maThanhToan} cho đơn hàng ${maDonHang}`);
+                } else {
+                    payments.push(payment);
+                    logActivity('Thêm thanh toán', `Thêm thanh toán ${maThanhToan} cho đơn hàng ${maDonHang}`);
+                }
+
+                // Update order status
+                if (trangThai === 'Đã thanh toán') {
+                    order.trangThai = 'Đã thanh toán';
+                }
+
+                localStorage.setItem('payments', JSON.stringify(payments));
+                localStorage.setItem('orders', JSON.stringify(orders));
+                document.getElementById('paymentForm').style.display = 'none';
+                renderPayments();
+            } catch (e) {
+                alert('Lỗi khi lưu thanh toán: ' + e.message);
+            }
+        }
+
+        function saveRefund() {
+            if (currentEmployee.chucVu !== 'Quản lý') {
+                alert('Bạn không có quyền thực hiện hành động này.');
+                return;
+            }
+
+            const maHoanTien = document.getElementById('maHoanTien').value.trim();
+            const maThanhToan = document.getElementById('maThanhToanRefund').value;
+            const thoiGian = document.getElementById('thoiGianHoan').value;
+            const soTien = parseInt(document.getElementById('soTienHoan').value);
+            const lyDo = document.getElementById('lyDo').value.trim();
+
+            // Validation
+            if (!maHoanTien || !maThanhToan || !thoiGian || isNaN(soTien) || soTien <= 0 || !lyDo) {
+                alert('Vui lòng điền đầy đủ thông tin hợp lệ.');
+                return;
+            }
+
+            if (refunds.some(r => r.maHoanTien === maHoanTien)) {
+                alert('Mã hoàn tiền đã tồn tại.');
+                return;
+            }
+
+            const payment = payments.find(p => p.maThanhToan === maThanhToan);
+            if (!payment || payment.trangThai !== 'Đã thanh toán') {
+                alert('Thanh toán không hợp lệ hoặc chưa được thanh toán.');
+                return;
+            }
+
+            if (soTien > payment.soTien) {
+                alert(`Số tiền hoàn (${soTien.toLocaleString('vi-VN')} VND) không được vượt quá số tiền thanh toán (${payment.soTien.toLocaleString('vi-VN')} VND).`);
+                return;
+            }
+
+            try {
+                // Update payment status
+                payment.trangThai = 'Hoàn tiền';
+
+                // Update order status
+                const order = orders.find(o => o.maDonHang === payment.maDonHang);
+                order.trangThai = 'Đã hủy';
+
+                // Restore inventory
+                order.items.forEach(item => {
+                    const product = products.find(p => p.maSanPham === item.maSanPham);
+                    const variant = product.variants.find(v => v.size === item.size && v.color === item.color);
+                    if (variant) {
+                        variant.stock += item.quantity;
+                        logActivity('Cập nhật tồn kho', `Hoàn ${item.quantity} ${product.tenSanPham} (Size: ${item.size}, Màu: ${item.color})`);
+                    }
+                });
+
+                // Save refund
+                const refund = { maHoanTien, maThanhToan, thoiGian, soTien, lyDo };
+                refunds.push(refund);
+
+                localStorage.setItem('payments', JSON.stringify(payments));
+                localStorage.setItem('orders', JSON.stringify(orders));
+                localStorage.setItem('products', JSON.stringify(products));
+                localStorage.setItem('refunds', JSON.stringify(refunds));
+                logActivity('Hoàn tiền', `Hoàn tiền ${maHoanTien} (${soTien.toLocaleString('vi-VN')} VND) cho thanh toán ${maThanhToan}`);
+                document.getElementById('refundForm').style.display = 'none';
+                renderPayments();
+            } catch (e) {
+                alert('Lỗi khi lưu hoàn tiền: ' + e.message);
+            }
+        }
+
+        function cancelPaymentForm() {
+            document.getElementById('paymentForm').style.display = 'none';
+        }
+
+        function cancelRefundForm() {
+            document.getElementById('refundForm').style.display = 'none';
+        }
+
+        function renderPayments() {
+            const paymentBody = document.getElementById('paymentBody');
+            paymentBody.innerHTML = '';
+            const filterStatus = document.getElementById('filterStatus').value;
+
+            const filteredPayments = payments.filter(payment => !filterStatus || payment.trangThai === filterStatus);
+
+            filteredPayments.forEach(payment => {
+                const order = orders.find(o => o.maDonHang === payment.maDonHang);
+                const row = document.createElement('tr');
+                row.innerHTML = `
+            <td>${payment.maThanhToan}</td>
+            <td>${payment.maDonHang}</td>
+            <td>${new Date(payment.thoiGian).toLocaleString('vi-VN')}</td>
+            <td>${payment.soTien.toLocaleString('vi-VN')}</td>
+            <td>${payment.hinhThuc}</td>
+            <td>${payment.trangThai}</td>
+            <td>${payment.maGiaoDich || '-'}</td>
+            <td>${payment.ghiChu || '-'}</td>
+            <td class="actions">
+                <button class="edit-btn" aria-label="Sửa thanh toán ${payment.maThanhToan}" onclick="editPayment('${payment.maThanhToan}')" ${payment.trangThai === 'Hoàn tiền' || (currentEmployee.chucVu !== 'Quản lý' && currentEmployee.chucVu !== 'Nhân viên bán hàng') ? 'disabled' : ''}>Sửa</button>
+                <button class="refund-btn" aria-label="Hoàn tiền ${payment.maThanhToan}" onclick="showRefundForm('${payment.maThanhToan}')" ${payment.trangThai !== 'Đã thanh toán' || currentEmployee.chucVu !== 'Quản lý' ? 'disabled' : ''}>Hoàn tiền</button>
+            </td>
+        `;
+                paymentBody.appendChild(row);
+            });
+
+            document.getElementById('totalPayments').textContent = filteredPayments.length;
+        }
+
+        // Update showPaymentForm to support multiple payment methods
+        function showPaymentForm() {
+            if (currentEmployee.chucVu !== 'Quản lý' && currentEmployee.chucVu !== 'Nhân viên bán hàng') {
+                alert('Bạn không có quyền thực hiện hành động này.');
+                return;
+            }
+
+            document.getElementById('paymentForm').style.display = 'block';
+            document.getElementById('paymentFormTitle').textContent = 'Thêm Thanh toán';
+            document.getElementById('maThanhToan').value = `TT${String(payments.length + 1).padStart(3, '0')}`;
+            document.getElementById('thoiGian').value = new Date().toISOString().slice(0, 16);
+            document.getElementById('soTien').value = '';
+            document.getElementById('hinhThuc').innerHTML = `
+        <option value="Tiền mặt">Tiền mặt</option>
+        <option value="Chuyển khoản">Chuyển khoản</option>
+        <option value="Momo">Momo</option>
+        <option value="ZaloPay">ZaloPay</option>
+    `;
+            document.getElementById('trangThai').value = 'Chưa thanh toán';
+            document.getElementById('maGiaoDich').value = '';
+            document.getElementById('ghiChu').value = '';
+
+            const orderSelect = document.getElementById('maDonHang');
+            orderSelect.innerHTML = '<option value="">Chọn đơn hàng</option>';
+            orders.filter(o => o.trangThai !== 'Đã hủy' && o.trangThai !== 'Đã thanh toán').forEach(o => {
+                if (!payments.some(p => p.maDonHang === o.maDonHang && p.trangThai === 'Đã thanh toán')) {
+                    orderSelect.innerHTML += `<option value="${o.maDonHang}">${o.maDonHang} (Tổng: ${o.tongTien.toLocaleString('vi-VN')} VND)</option>`;
+                }
+            });
+        }
+
+        // Update editPayment to support multiple payment methods
+        function editPayment(maThanhToan) {
+            if (currentEmployee.chucVu !== 'Quản lý' && currentEmployee.chucVu !== 'Nhân viên bán hàng') {
+                alert('Bạn không có quyền thực hiện hành động này.');
+                return;
+            }
+
+            const payment = payments.find(p => p.maThanhToan === maThanhToan);
+            document.getElementById('paymentForm').style.display = 'block';
+            document.getElementById('paymentFormTitle').textContent = 'Sửa Thanh toán';
+            document.getElementById('maThanhToan').value = payment.maThanhToan;
+            document.getElementById('maDonHang').innerHTML = `<option value="${payment.maDonHang}">${payment.maDonHang}</option>`;
+            document.getElementById('thoiGian').value = new Date(payment.thoiGian).toISOString().slice(0, 16);
+            document.getElementById('soTien').value = payment.soTien;
+            document.getElementById('hinhThuc').innerHTML = `
+        <option value="Tiền mặt" ${payment.hinhThuc === 'Tiền mặt' ? 'selected' : ''}>Tiền mặt</option>
+        <option value="Chuyển khoản" ${payment.hinhThuc === 'Chuyển khoản' ? 'selected' : ''}>Chuyển khoản</option>
+        <option value="Momo" ${payment.hinhThuc === 'Momo' ? 'selected' : ''}>Momo</option>
+        <option value="ZaloPay" ${payment.hinhThuc === 'ZaloPay' ? 'selected' : ''}>ZaloPay</option>
+    `;
+            document.getElementById('trangThai').value = payment.trangThai;
+            document.getElementById('maGiaoDich').value = payment.maGiaoDich || '';
+            document.getElementById('ghiChu').value = payment.ghiChu || '';
+        }
+
+        // Event listeners
+        document.getElementById('filterStatus').addEventListener('change', renderPayments);
+    </script>
+</body>
+
+</html>

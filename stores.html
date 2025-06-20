@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cua Hang Management - Quản lý Cửa hàng</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        .search-bar input {
+            padding: 5px;
+            width: 200px;
+        }
+        .add-btn {
+            padding: 5px 10px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+        .add-btn:hover {
+            background-color: #45a049;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+        th {
+            background-color: #f2f2f2;
+        }
+        .actions button {
+            padding: 4px 8px;
+            margin-right: 5px;
+            cursor: pointer;
+        }
+        .edit-btn {
+            background-color: #2196F3;
+            color: white;
+            border: none;
+        }
+        .delete-btn {
+            background-color: #f44336;
+            color: white;
+            border: none;
+        }
+        .form-container {
+            display: none;
+            margin-top: 20px;
+            padding: 15px;
+            border: 1px solid #ddd;
+            background-color: #f9f9f9;
+        }
+        .form-container label {
+            display: block;
+            margin: 10px 0 5px;
+        }
+        .form-container input {
+            width: 100%;
+            padding: 5px;
+            box-sizing: border-box;
+        }
+        .form-container button {
+            padding: 5px 10px;
+            margin-top: 10px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+        .form-container button:hover {
+            background-color: #45a049;
+        }
+        .summary {
+            margin-top: 20px;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h2>Cửa hàng Management</h2>
+            <div class="search-bar">
+                <input type="text" id="searchInput" placeholder="Search..." value="">
+            </div>
+            <button class="add-btn" onclick="showForm()">Thêm Cửa Hàng</button>
+        </div>
+
+        <table id="storeTable">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Tên</th>
+                    <th>Địa chỉ</th>
+                    <th>Số điện thoại</th>
+                    <th>Email</th>
+                    <th>Hành động</th>
+                </tr>
+            </thead>
+            <tbody id="storeBody"></tbody>
+        </table>
+
+        <div class="summary">
+            <p>Tổng số cửa hàng: <span id="totalStores">0</span></p>
+            <p>Cửa hàng đầu tiên: <span id="mostExpensive">Không có dữ liệu</span></p>
+        </div>
+
+        <div id="formContainer" class="form-container">
+            <h3 id="formTitle">Thêm Cửa hàng</h3>
+            <label for="maCuaHang">ID:</label>
+            <input type="text" id="maCuaHang" required>
+            <label for="tenCuaHang">Tên:</label>
+            <input type="text" id="tenCuaHang" required>
+            <label for="diaChi">Địa chỉ:</label>
+            <input type="text" id="diaChi" required>
+            <label for="soDienThoai">Số điện thoại:</label>
+            <input type="text" id="soDienThoai" required>
+            <label for="email">Email:</label>
+            <input type="email" id="email" required>
+            <button onclick="saveStore()">Lưu</button>
+            <button onclick="cancelForm()">Hủy</button>
+        </div>
+    </div>
+
+    <script>
+        let stores = JSON.parse(localStorage.getItem('stores')) || [
+            { maCuaHang: 'CH001', tenCuaHang: 'Cửa hàng Sneaker Hà Nội', diaChi: '1 Trần Hưng Đạo, Hà Nội', soDienThoai: '0912345678', email: 'sneakerhn@gmail.com' },
+            { maCuaHang: 'CH002', tenCuaHang: 'Cửa hàng Sneaker TP.HCM', diaChi: '2 Lê Lợi, TP.HCM', soDienThoai: '0918765432', email: 'sneakertphcm@gmail.com' },
+            { maCuaHang: 'CH003', tenCuaHang: 'Cửa hàng Sneaker Đà Nẵng', diaChi: '3 Hùng Vương, Đà Nẵng', soDienThoai: '0901234567', email: 'sneakerdn@gmail.com' },
+            { maCuaHang: 'CH004', tenCuaHang: 'Cửa hàng Sneaker Cần Thơ', diaChi: '101 Hùng Vương, Ninh Kiều, Cần Thơ', soDienThoai: '0901234564', email: 'sneakerct1@gmail.com' },
+            { maCuaHang: 'CH005', tenCuaHang: 'Cửa hàng Sneaker Nha Trang', diaChi: '234 Yersin, Vạn Thắng, Nha Trang', soDienThoai: '0901234565', email: 'sneakernh1@gmail.com' },
+            { maCuaHang: 'CH006', tenCuaHang: 'Cửa hàng Sneaker Vũng Tàu', diaChi: '567 Lê Hồng Phong, Vũng Tàu', soDienThoai: '0901234566', email: 'sneakervt1@gmail.com' },
+            { maCuaHang: 'CH007', tenCuaHang: 'Cửa hàng Sneaker Huế', diaChi: '890 Hai Bà Trưng, Huế', soDienThoai: '0901234567', email: 'sneakerhue1@gmail.com' },
+            { maCuaHang: 'CH008', tenCuaHang: 'Cửa hàng Sneaker Hải Phòng', diaChi: '123 Nguyễn Văn Linh, Hải Phòng', soDienThoai: '0901234568', email: 'sneakerhp1@gmail.com' },
+            { maCuaHang: 'CH009', tenCuaHang: 'Cửa hàng Sneaker Bình Dương', diaChi: '456 Cách Mạng Tháng Tám, Bình Dương', soDienThoai: '0901234569', email: 'sneakerbd1@gmail.com' },
+            { maCuaHang: 'CH010', tenCuaHang: 'Cửa hàng Sneaker Đồng Nai', diaChi: '789 Võ Thị Sáu, Đồng Nai', soDienThoai: '0901234570', email: 'sneakerdn2@gmail.com' }
+        ];
+
+        // Lưu mảng khởi tạo vào localStorage để đảm bảo key 'stores' tồn tại
+        localStorage.setItem('stores', JSON.stringify(stores));
+        console.log('Đã lưu stores vào localStorage:', JSON.parse(localStorage.getItem('stores')).length, 'cửa hàng');
+
+        function renderTable() {
+            console.log('Số cửa hàng:', stores.length);
+            const storeBody = document.getElementById('storeBody');
+            storeBody.innerHTML = '';
+            const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+            const filteredStores = stores.filter(store =>
+                store.maCuaHang.toLowerCase().includes(searchTerm) ||
+                store.tenCuaHang.toLowerCase().includes(searchTerm) ||
+                store.diaChi.toLowerCase().includes(searchTerm)
+            );
+            console.log('Số cửa hàng sau lọc:', filteredStores.length);
+
+            filteredStores.forEach(store => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${store.maCuaHang}</td>
+                    <td>${store.tenCuaHang}</td>
+                    <td>${store.diaChi}</td>
+                    <td>${store.soDienThoai}</td>
+                    <td>${store.email}</td>
+                    <td class="actions">
+                        <button class="edit-btn" onclick="editStore('${store.maCuaHang}')">Edit</button>
+                        <button class="delete-btn" onclick="deleteStore('${store.maCuaHang}')">Delete</button>
+                    </td>
+                `;
+                storeBody.appendChild(row);
+            });
+
+            document.getElementById('totalStores').textContent = filteredStores.length;
+            document.getElementById('mostExpensive').textContent = filteredStores.length > 0 ? filteredStores[0].tenCuaHang : 'Không có dữ liệu';
+        }
+
+        function showForm() {
+            document.getElementById('formContainer').style.display = 'block';
+            document.getElementById('formTitle').textContent = 'Thêm Cửa hàng';
+            document.getElementById('maCuaHang').value = '';
+            document.getElementById('tenCuaHang').value = '';
+            document.getElementById('diaChi').value = '';
+            document.getElementById('soDienThoai').value = '';
+            document.getElementById('email').value = '';
+        }
+
+        function editStore(maCuaHang) {
+            const store = stores.find(s => s.maCuaHang === maCuaHang);
+            document.getElementById('formContainer').style.display = 'block';
+            document.getElementById('formTitle').textContent = 'Sửa Cửa hàng';
+            document.getElementById('maCuaHang').value = store.maCuaHang;
+            document.getElementById('tenCuaHang').value = store.tenCuaHang;
+            document.getElementById('diaChi').value = store.diaChi;
+            document.getElementById('soDienThoai').value = store.soDienThoai;
+            document.getElementById('email').value = store.email;
+        }
+
+        function saveStore() {
+            const maCuaHang = document.getElementById('maCuaHang').value;
+            const tenCuaHang = document.getElementById('tenCuaHang').value;
+            const diaChi = document.getElementById('diaChi').value;
+            const soDienThoai = document.getElementById('soDienThoai').value;
+            const email = document.getElementById('email').value;
+
+            const store = { maCuaHang, tenCuaHang, diaChi, soDienThoai, email };
+            const existingStoreIndex = stores.findIndex(s => s.maCuaHang === maCuaHang);
+
+            if (existingStoreIndex > -1) {
+                stores[existingStoreIndex] = store;
+            } else {
+                stores.push(store);
+            }
+
+            localStorage.setItem('stores', JSON.stringify(stores));
+            console.log('Đã cập nhật localStorage:', JSON.parse(localStorage.getItem('stores')).length, 'cửa hàng');
+            document.getElementById('formContainer').style.display = 'none';
+            renderTable();
+        }
+
+        function deleteStore(maCuaHang) {
+            if (confirm('Bạn có chắc muốn xóa cửa hàng này?')) {
+                stores = stores.filter(s => s.maCuaHang !== maCuaHang);
+                localStorage.setItem('stores', JSON.stringify(stores));
+                console.log('Đã cập nhật localStorage sau xóa:', JSON.parse(localStorage.getItem('stores')).length, 'cửa hàng');
+                renderTable();
+            }
+        }
+
+        function cancelForm() {
+            document.getElementById('formContainer').style.display = 'none';
+        }
+
+        document.getElementById('searchInput').addEventListener('input', renderTable);
+        document.getElementById('searchInput').value = '';
+        renderTable();
+    </script>
+</body>
+</html>

@@ -1,0 +1,1061 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quản lý Đơn hàng</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f4f4f4;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .filter-container {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .filter-container select,
+        .filter-container input {
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+
+        .add-btn {
+            padding: 8px 16px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        .add-btn:hover {
+            background-color: #45a049;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+
+        th,
+        td {
+            border: 1px solid #ddd;
+            padding: 10px;
+            text-align: left;
+        }
+
+        th {
+            background-color: #f2f2f2;
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        .actions button {
+            padding: 6px 12px;
+            margin-right: 5px;
+            cursor: pointer;
+            border: none;
+            border-radius: 4px;
+        }
+
+        .edit-btn {
+            background-color: #2196F3;
+            color: white;
+        }
+
+        .delete-btn {
+            background-color: #f44336;
+            color: white;
+        }
+
+        .form-container {
+            display: none;
+            margin-top: 20px;
+            padding: 20px;
+            border: 1px solid #ddd;
+            background-color: #f9f9f9;
+            border-radius: 4px;
+        }
+
+        .form-container label {
+            display: block;
+            margin: 10px 0 5px;
+            font-weight: bold;
+        }
+
+        .form-container input,
+        .form-container select {
+            width: 100%;
+            padding: 8px;
+            box-sizing: border-box;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+
+        .form-container button {
+            padding: 8px 16px;
+            margin-top: 10px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        .form-container button:hover {
+            background-color: #45a049;
+        }
+
+        .item-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+        }
+
+        .item-table th,
+        .item-table td {
+            padding: 8px;
+        }
+
+        .summary {
+            margin-top: 20px;
+            font-weight: bold;
+        }
+
+        .alert {
+            padding: 10px;
+            background-color: #ffcccc;
+            border: 1px solid #cc0000;
+            border-radius: 4px;
+            margin-bottom: 20px;
+            display: none;
+        }
+
+        .order-search {
+            margin-bottom: 20px;
+        }
+
+        .search-form {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .search-form input {
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            width: 200px;
+        }
+
+        #orderResult {
+            padding: 10px;
+            border-radius: 4px;
+        }
+
+        #orderResult.success {
+            background-color: #e6f4e6;
+            border: 1px solid #4CAF50;
+        }
+
+        #orderResult.error {
+            background-color: #f9e6e6;
+            border: 1px solid #f44336;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <div class="header">
+            <h2>Quản lý Đơn hàng</h2>
+            <button class="add-btn" onclick="showOrderForm()">Tạo Đơn hàng</button>
+        </div>
+        <div class="order-search">
+            <h4>Tra cứu Đơn hàng</h4>
+            <div class="search-form">
+                <label for="maDonHangSearch">Mã Đơn hàng:</label>
+                <input type="text" id="maDonHangSearch" placeholder="VD: DH001">
+                <button class="add-btn" onclick="searchOrder()">Tra cứu</button>
+            </div>
+            <div id="orderResult" style="margin-top: 10px;"></div>
+        </div>
+        <div class="filter-container">
+            <select id="filterStatus">
+                <option value="">Tất cả trạng thái</option>
+                <option value="Đang chờ xử lý">Đang chờ xử lý</option>
+                <option value="Đã xác nhận">Đã xác nhận</option>
+                <option value="Đang giao hàng">Đang giao hàng</option>
+                <option value="Đã giao hàng">Đã giao hàng</option>
+                <option value="Đã hủy">Đã hủy</option>
+            </select>
+            <input type="date" id="filterDate">
+            <select id="filterStore">
+                <option value="">Tất cả cửa hàng</option>
+            </select>
+            <select id="filterCustomer">
+                <option value="">Tất cả khách hàng</option>
+            </select>
+        </div>
+
+        <div id="stockAlert" class="alert"></div>
+
+        <table id="orderTable" role="grid" aria-label="Danh sách đơn hàng">
+            <thead>
+                <tr>
+                    <th scope="col" onclick="sortTable('maDonHang')">Mã Đơn</th>
+                    <th scope="col" onclick="sortTable('maKhachHang')">Khách hàng</th>
+                    <th scope="col" onclick="sortTable('ngayDat')">Ngày đặt</th>
+                    <th scope="col">Sản phẩm</th>
+                    <th scope="col" onclick="sortTable('tongTien')">Tổng tiền (VND)</th>
+                    <th scope="col" onclick="sortTable('trangThai')">Trạng thái</th>
+                    <th scope="col" onclick="sortTable('maNhanVien')">Nhân viên</th>
+                    <th scope="col" onclick="sortTable('maCuaHang')">Cửa hàng</th>
+                    <th scope="col">Hành động</th>
+                </tr>
+            </thead>
+            <tbody id="orderBody"></tbody>
+        </table>
+
+        <div id="orderForm" class="form-container">
+            <h3 id="orderFormTitle">Tạo Đơn hàng</h3>
+            <input type="maDonHang" id="editOrderId" hidden>
+            <label for="maDonHang">Mã Đơn hàng:</label>
+            <input type="maDonHang" readonly>
+            <label for="maKhachHang">Khách hàng:</label>
+            <select id="maKhachHang" required>
+                <option value="">Chọn khách hàng</option>
+            </select>
+            <label for="ngayDat">Ngày đặt:</label>
+            <input type="date" id="ngayDat" required>
+            <label for="trangThai">Trạng thái:</label>
+            <select id="trangThai" required>
+                <option value="Đang chờ xử lý">Đang chờ xử lý</option>
+                <option value="Đã xác nhận">Đã xác nhận</option>
+                <option value="Đang giao hàng">Đang giao hàng</option>
+                <option value="Đã giao hàng">Đã giao hàng</option>
+                <option value="Đã hủy">Đã hủy</option>
+            </select>
+            <label for="maNhanVien">Nhân viên:</label>
+            <select id="maNhanVien" required></select>
+            <label for="maCuaHang">Cửa hàng:</label>
+            <select id="maCuaHang" required></select>
+            <div>
+                <h4>Sản phẩm</h4>
+                <p>Tổng tiền tạm tính: <span id="tempTotal">0</span> VND</p>
+                <table class="item-table">
+                    <thead>
+                        <tr>
+                            <th>Sản phẩm</th>
+                            <th>Kích cỡ</th>
+                            <th>Màu sắc</th>
+                            <th>Số lượng</th>
+                            <th>Giá bán</th>
+                            <th>Hành động</th>
+                        </tr>
+                    </thead>
+                    <tbody id="orderItems"></tbody>
+                </table>
+            </div>
+            <button onclick="saveOrder()">Lưu</button>
+            <button onclick="cancelOrderForm()">Hủy</button>
+        </div>
+
+        <div id="customerForm" class="form-container">
+            <h3>Thêm Khách hàng mới</h3>
+            <label for="newMaKhachHang">Mã Khách hàng:</label>
+            <input type="text" id="newMaKhachHang" required>
+            <label for="newHoTen">Họ tên:</label>
+            <input type="text" id="newHoTen" required>
+            <label for="newSoDienThoai">Số điện thoại:</label>
+            <input type="text" id="newSoDienThoai" required>
+            <label for="newDiaChi">Địa chỉ:</label>
+            <input type="text" id="newDiaChi" required>
+            <label for="newEmail">Email:</label>
+            <input type="newEmail" id="newEmail">
+            <button onclick="saveNewCustomer()">Lưu</button>
+            <button onclick="cancelCustomerForm()">Hủy</button>
+        </div>
+
+        <div class="summary">
+            <p>Tổng số đơn hàng: <span id="totalOrders">0</span></p>
+            <p>Tổng doanh thu: <span id="totalRevenue">0</span> VND</p>
+        </div>
+    </div>
+
+    <script>
+        const MIN_STOCK_THRESHOLD = 10;
+
+        let orders = [];
+        let customers = [];
+        let products = [];
+        let stores = [];
+        let employees = [];
+        let history = [];
+
+        // Load data from localStorage
+        try {
+            // Stores (CuaHang)
+            stores = JSON.parse(localStorage.getItem('stores')) || [
+                { maCuaHang: 'CH001', tenCuaHang: 'Cửa hàng Sneaker HCM', diaChi: '123 Nguyễn Huệ, Quận 1, TP.HCM', sdt: '0901234561', email: 'sneakerhcm1@gmail.com' },
+                { maCuaHang: 'CH002', tenCuaHang: 'Cửa hàng Sneaker Hà Nội', diaChi: '456 Hàng Bông, Hoàn Kiếm, Hà Nội', sdt: '0901234562', email: 'sneakerhn1@gmail.com' },
+                { maCuaHang: 'CH003', tenCuaHang: 'Cửa hàng Sneaker Đà Nẵng', diaChi: '789 Lê Duẩn, Hải Châu, Đà Nẵng', sdt: '0901234563', email: 'sneakerdn1@gmail.com' },
+                { maCuaHang: 'CH004', tenCuaHang: 'Cửa hàng Sneaker Cần Thơ', diaChi: '101 Hùng Vương, Ninh Kiều, Cần Thơ', sdt: '0901234564', email: 'sneakerct1@gmail.com' },
+                { maCuaHang: 'CH005', tenCuaHang: 'Cửa hàng Sneaker Nha Trang', diaChi: '234 Yersin, Vạn Thắng, Nha Trang', sdt: '0901234565', email: 'sneakernh1@gmail.com' },
+                { maCuaHang: 'CH006', tenCuaHang: 'Cửa hàng Sneaker Vũng Tàu', diaChi: '567 Lê Hồng Phong, Vũng Tàu', sdt: '0901234566', email: 'sneakervt1@gmail.com' },
+                { maCuaHang: 'CH007', tenCuaHang: 'Cửa hàng Sneaker Huế', diaChi: '890 Hai Bà Trưng, Huế', sdt: '0901234567', email: 'sneakerhue1@gmail.com' },
+                { maCuaHang: 'CH008', tenCuaHang: 'Cửa hàng Sneaker Hải Phòng', diaChi: '123 Nguyễn Văn Linh, Hải Phòng', sdt: '0901234568', email: 'sneakerhp1@gmail.com' },
+                { maCuaHang: 'CH009', tenCuaHang: 'Cửa hàng Sneaker Bình Dương', diaChi: '456 Cách Mạng Tháng Tám, Bình Dương', sdt: '0901234569', email: 'sneakerbd1@gmail.com' },
+                { maCuaHang: 'CH010', tenCuaHang: 'Cửa hàng Sneaker Đồng Nai', diaChi: '789 Võ Thị Sáu, Đồng Nai', sdt: '0901234570', email: 'sneakerdn2@gmail.com' }
+            ];
+
+            // Employees (NhanVien)
+            employees = JSON.parse(localStorage.getItem('employees')) || [
+                { maNhanVien: 'NV001', hoTen: 'Nguyễn Thị X', sdt: '0912223301', gioiTinh: 'Nữ', chucVu: 'Nhân viên bán hàng', maCuaHang: 'CH001', ngayVaoLam: '2023-01-15' },
+                { maNhanVien: 'NV002', hoTen: 'Trần Văn Y', sdt: '0912223302', gioiTinh: 'Nam', chucVu: 'Nhân viên kho', maCuaHang: 'CH001', ngayVaoLam: '2022-06-20' },
+                { maNhanVien: 'NV003', hoTen: 'Lê Thị Z', sdt: '0912223303', gioiTinh: 'Nữ', chucVu: 'Quản lý', maCuaHang: 'CH002', ngayVaoLam: '2021-03-10' },
+                { maNhanVien: 'NV004', hoTen: 'Phạm Văn T', sdt: '0912223304', gioiTinh: 'Nam', chucVu: 'Nhân viên bán hàng', maCuaHang: 'CH002', ngayVaoLam: '2023-09-05' },
+                { maNhanVien: 'NV005', hoTen: 'Hoàng Thị K', sdt: '0912223305', gioiTinh: 'Nữ', chucVu: 'Nhân viên kho', maCuaHang: 'CH003', ngayVaoLam: '2022-12-01' },
+                { maNhanVien: 'NV006', hoTen: 'Nguyễn Văn L', sdt: '0912223306', gioiTinh: 'Nam', chucVu: 'Nhân viên bán hàng', maCuaHang: 'CH003', ngayVaoLam: '2023-02-10' },
+                { maNhanVien: 'NV007', hoTen: 'Trần Thị M', sdt: '0912223307', gioiTinh: 'Nữ', chucVu: 'Quản lý', maCuaHang: 'CH004', ngayVaoLam: '2021-07-15' },
+                { maNhanVien: 'NV008', hoTen: 'Lê Văn N', sdt: '0912223308', gioiTinh: 'Nam', chucVu: 'Nhân viên kho', maCuaHang: 'CH004', ngayVaoLam: '2022-09-20' },
+                { maNhanVien: 'NV009', hoTen: 'Phạm Thị O', sdt: '0912223309', gioiTinh: 'Nữ', chucVu: 'Nhân viên bán hàng', maCuaHang: 'CH005', ngayVaoLam: '2023-03-25' },
+                { maNhanVien: 'NV010', hoTen: 'Hoàng Văn P', sdt: '0912223310', gioiTinh: 'Nam', chucVu: 'Nhân viên kho', maCuaHang: 'CH005', ngayVaoLam: '2022-11-30' },
+                { maNhanVien: 'NV011', hoTen: 'Nguyễn Thị Q', sdt: '0912223311', gioiTinh: 'Nữ', chucVu: 'Quản lý', maCuaHang: 'CH006', ngayVaoLam: '2021-05-05' },
+                { maNhanVien: 'NV012', hoTen: 'Trần Văn R', sdt: '0912223312', gioiTinh: 'Nam', chucVu: 'Nhân viên bán hàng', maCuaHang: 'CH006', ngayVaoLam: '2023-04-10' },
+                { maNhanVien: 'NV013', hoTen: 'Lê Thị S', sdt: '0912223313', gioiTinh: 'Nữ', chucVu: 'Nhân viên kho', maCuaHang: 'CH007', ngayVaoLam: '2022-08-15' },
+                { maNhanVien: 'NV014', hoTen: 'Phạm Văn T', sdt: '0912223314', gioiTinh: 'Nam', chucVu: 'Nhân viên bán hàng', maCuaHang: 'CH007', ngayVaoLam: '2023-06-20' },
+                { maNhanVien: 'NV015', hoTen: 'Hoàng Thị U', sdt: '0912223315', gioiTinh: 'Nữ', chucVu: 'Quản lý', maCuaHang: 'CH008', ngayVaoLam: '2021-09-25' },
+                { maNhanVien: 'NV016', hoTen: 'Nguyễn Văn V', sdt: '0912223316', gioiTinh: 'Nam', chucVu: 'Nhân viên kho', maCuaHang: 'CH008', ngayVaoLam: '2022-10-30' },
+                { maNhanVien: 'NV017', hoTen: 'Trần Thị W', sdt: '0912223317', gioiTinh: 'Nữ', chucVu: 'Nhân viên bán hàng', maCuaHang: 'CH009', ngayVaoLam: '2023-07-05' },
+                { maNhanVien: 'NV018', hoTen: 'Lê Văn X', sdt: '0912223318', gioiTinh: 'Nam', chucVu: 'Nhân viên kho', maCuaHang: 'CH009', ngayVaoLam: '2022-12-10' },
+                { maNhanVien: 'NV019', hoTen: 'Phạm Thị Y', sdt: '0912223319', gioiTinh: 'Nữ', chucVu: 'Quản lý', maCuaHang: 'CH010', ngayVaoLam: '2021-04-15' },
+                { maNhanVien: 'NV020', hoTen: 'Hoàng Văn Z', sdt: '0912223320', gioiTinh: 'Nam', chucVu: 'Nhân viên bán hàng', maCuaHang: 'CH010', ngayVaoLam: '2023-08-20' }
+            ];
+
+            // Customers (KhachHang)
+            customers = JSON.parse(localStorage.getItem('customers')) || [
+                { maKhachHang: 'KH001', hoTen: 'Nguyễn Văn A', soDienThoai: '0901112231', diaChi: '12 Nguyễn Văn Bảo, Quận Gò Vấp, TP.HCM', email: '' },
+                { maKhachHang: 'KH002', hoTen: 'Trần Thị B', soDienThoai: '0901112232', diaChi: '45 Hàng Mã, Hoàn Kiếm, Hà Nội', email: '' },
+                { maKhachHang: 'KH003', hoTen: 'Lê Văn C', soDienThoai: '0901112233', diaChi: '67 Lê Duẩn, Hải Châu, Đà Nẵng', email: '' },
+                { maKhachHang: 'KH004', hoTen: 'Phạm Thị D', soDienThoai: '0901112234', diaChi: '89 Hùng Vương, Ninh Kiều, Cần Thơ', email: '' },
+                { maKhachHang: 'KH005', hoTen: 'Hoàng Văn E', soDienThoai: '0901112235', diaChi: '23 Yersin, Vạn Thắng, Nha Trang', email: '' },
+                { maKhachHang: 'KH006', hoTen: 'Nguyễn Thị F', soDienThoai: '0901112236', diaChi: '56 Lê Hồng Phong, Vũng Tàu', email: '' },
+                { maKhachHang: 'KH007', hoTen: 'Trần Văn G', soDienThoai: '0901112237', diaChi: '78 Hai Bà Trưng, Huế', email: '' },
+                { maKhachHang: 'KH008', hoTen: 'Lê Thị H', soDienThoai: '0901112238', diaChi: '90 Nguyễn Văn Linh, Hải Phòng', email: '' },
+                { maKhachHang: 'KH009', hoTen: 'Phạm Văn I', soDienThoai: '0901112239', diaChi: '12 Cách Mạng Tháng Tám, Bình Dương', email: '' },
+                { maKhachHang: 'KH010', hoTen: 'Hoàng Thị J', soDienThoai: '0901112240', diaChi: '34 Võ Thị Sáu, Đồng Nai', email: '' },
+                { maKhachHang: 'KH011', hoTen: 'Nguyễn Văn K', soDienThoai: '0901112241', diaChi: '56 Hạ Long, Quảng Ninh', email: '' },
+                { maKhachHang: 'KH012', hoTen: 'Trần Thị L', soDienThoai: '0901112242', diaChi: '78 Lê Lợi, Vinh, Nghệ An', email: '' },
+                { maKhachHang: 'KH013', hoTen: 'Lê Văn M', soDienThoai: '0901112243', diaChi: '90 Trần Phú, Thanh Hóa', email: '' },
+                { maKhachHang: 'KH014', hoTen: 'Phạm Thị N', soDienThoai: '0901112244', diaChi: '12 Nguyễn Văn Cừ, Đà Lạt', email: '' },
+                { maKhachHang: 'KH015', hoTen: 'Hoàng Văn O', soDienThoai: '0901112245', diaChi: '34 Trần Hưng Đạo, Phú Quốc', email: '' },
+                { maKhachHang: 'KH016', hoTen: 'Nguyễn Thị P', soDienThoai: '0901112246', diaChi: '56 Lê Văn Sỹ, Quận 3, TP.HCM', email: '' },
+                { maKhachHang: 'KH017', hoTen: 'Trần Văn Q', soDienThoai: '0901112247', diaChi: '78 Hàng Trống, Hà Nội', email: '' },
+                { maKhachHang: 'KH018', hoTen: 'Lê Thị R', soDienThoai: '0901112248', diaChi: '90 Nguyễn Chí Thanh, Đà Nẵng', email: '' },
+                { maKhachHang: 'KH019', hoTen: 'Phạm Văn S', soDienThoai: '0901112249', diaChi: '12 Hùng Vương, Cần Thơ', email: '' },
+                { maKhachHang: 'KH020', hoTen: 'Hoàng Thị T', soDienThoai: '0901112250', diaChi: '34 Yersin, Nha Trang', email: '' },
+                { maKhachHang: 'KH021', hoTen: 'Nguyễn Văn U', soDienThoai: '0901112251', diaChi: '56 Lê Hồng Phong, Vũng Tàu', email: '' },
+                { maKhachHang: 'KH022', hoTen: 'Trần Thị V', soDienThoai: '0901112252', diaChi: '78 Hai Bà Trưng, Huế', email: '' },
+                { maKhachHang: 'KH023', hoTen: 'Lê Văn W', soDienThoai: '0901112253', diaChi: '90 Nguyễn Văn Linh, Hải Phòng', email: '' },
+                { maKhachHang: 'KH024', hoTen: 'Phạm Thị X', soDienThoai: '0901112254', diaChi: '12 Cách Mạng Tháng Tám, Bình Dương', email: '' },
+                { maKhachHang: 'KH025', hoTen: 'Hoàng Văn Y', soDienThoai: '0901112255', diaChi: '34 Võ Thị Sáu, Đồng Nai', email: '' },
+                { maKhachHang: 'KH026', hoTen: 'Nguyễn Thị Z', soDienThoai: '0901112256', diaChi: '56 Hạ Long, Quảng Ninh', email: '' },
+                { maKhachHang: 'KH027', hoTen: 'Trần Văn AA', soDienThoai: '0901112257', diaChi: '78 Lê Lợi, Vinh, Nghệ An', email: '' },
+                { maKhachHang: 'KH028', hoTen: 'Lê Thị BB', soDienThoai: '0901112258', diaChi: '90 Trần Phú, Thanh Hóa', email: '' },
+                { maKhachHang: 'KH029', hoTen: 'Phạm Văn CC', soDienThoai: '0901112259', diaChi: '12 Nguyễn Văn Cừ, Đà Lạt', email: '' },
+                { maKhachHang: 'KH030', hoTen: 'Hoàng Thị DD', soDienThoai: '0901112260', diaChi: '34 Trần Hưng Đạo, Phú Quốc', email: '' }
+            ];
+
+            // Products (SanPham)
+            products = JSON.parse(localStorage.getItem('products')) || [
+                {
+                    maSanPham: 'SP001', tenSanPham: 'Adidas Ultraboost 21', loaiGiay: 'Giày thể thao', giaBan: 4500000,
+                    variants: [
+                        { size: 40, color: 'Đen', stock: 100 },
+                        { size: 41, color: 'Trắng', stock: 100 }
+                    ]
+                },
+                {
+                    maSanPham: 'SP002', tenSanPham: 'Bitis Hunter X', loaiGiay: 'Sneaker', giaBan: 800000,
+                    variants: [
+                        { size: 39, color: 'Xanh', stock: 100 },
+                        { size: 40, color: 'Đen', stock: 100 }
+                    ]
+                }
+            ];
+
+            // Orders (DonHang)
+            orders = JSON.parse(localStorage.getItem('orders')) || [
+                {
+                    maDonHang: 'DH001', ngayDat: '2025-05-01', maKhachHang: 'KH001', maNhanVien: 'NV001', maCuaHang: 'CH001',
+                    tongTien: 4500000, trangThai: 'Đã giao hàng',
+                    items: [{ maSanPham: 'SP001', size: 40, color: 'Đen', quantity: 1, giaBan: 4500000 }]
+                },
+                {
+                    maDonHang: 'DH002', ngayDat: '2025-05-02', maKhachHang: 'KH002', maNhanVien: 'NV001', maCuaHang: 'CH001',
+                    tongTien: 3800000, trangThai: 'Đang chờ xử lý',
+                    items: [{ maSanPham: 'SP001', size: 40, color: 'Đen', quantity: 1, giaBan: 3800000 }]
+                },
+                {
+                    maDonHang: 'DH003', ngayDat: '2025-05-03', maKhachHang: 'KH003', maNhanVien: 'NV003', maCuaHang: 'CH002',
+                    tongTien: 850000, trangThai: 'Đã xác nhận',
+                    items: [{ maSanPham: 'SP002', size: 39, color: 'Xanh', quantity: 1, giaBan: 850000 }]
+                },
+                {
+                    maDonHang: 'DH004', ngayDat: '2025-05-04', maKhachHang: 'KH004', maNhanVien: 'NV003', maCuaHang: 'CH002',
+                    tongTien: 2800000, trangThai: 'Đã hủy',
+                    items: [{ maSanPham: 'SP001', size: 40, color: 'Đen', quantity: 1, giaBan: 2800000 }]
+                },
+                {
+                    maDonHang: 'DH005', ngayDat: '2025-05-05', maKhachHang: 'KH005', maNhanVien: 'NV005', maCuaHang: 'CH003',
+                    tongTien: 1500000, trangThai: 'Đang giao hàng',
+                    items: [{ maSanPham: 'SP001', size: 40, color: 'Đen', quantity: 1, giaBan: 1500000 }]
+                },
+                {
+                    maDonHang: 'DH006', ngayDat: '2025-05-06', maKhachHang: 'KH006', maNhanVien: 'NV005', maCuaHang: 'CH003',
+                    tongTien: 3200000, trangThai: 'Đã giao hàng',
+                    items: [{ maSanPham: 'SP001', size: 40, color: 'Đen', quantity: 1, giaBan: 3200000 }]
+                },
+                {
+                    maDonHang: 'DH007', ngayDat: '2025-05-07', maKhachHang: 'KH007', maNhanVien: 'NV007', maCuaHang: 'CH004',
+                    tongTien: 1800000, trangThai: 'Đã xác nhận',
+                    items: [{ maSanPham: 'SP001', size: 40, color: 'Đen', quantity: 1, giaBan: 1800000 }]
+                },
+                {
+                    maDonHang: 'DH008', ngayDat: '2025-05-08', maKhachHang: 'KH008', maNhanVien: 'NV007', maCuaHang: 'CH004',
+                    tongTien: 4000000, trangThai: 'Đang chờ xử lý',
+                    items: [{ maSanPham: 'SP001', size: 40, color: 'Đen', quantity: 1, giaBan: 4000000 }]
+                },
+                {
+                    maDonHang: 'DH009', ngayDat: '2025-05-09', maKhachHang: 'KH009', maNhanVien: 'NV009', maCuaHang: 'CH005',
+                    tongTien: 2500000, trangThai: 'Đã giao hàng',
+                    items: [{ maSanPham: 'SP001', size: 40, color: 'Đen', quantity: 1, giaBan: 2500000 }]
+                },
+                {
+                    maDonHang: 'DH010', ngayDat: '2025-05-10', maKhachHang: 'KH010', maNhanVien: 'NV009', maCuaHang: 'CH005',
+                    tongTien: 3500000, trangThai: 'Đang giao hàng',
+                    items: [{ maSanPham: 'SP001', size: 40, color: 'Đen', quantity: 1, giaBan: 3500000 }]
+                },
+                {
+                    maDonHang: 'DH011', ngayDat: '2025-05-11', maKhachHang: 'KH011', maNhanVien: 'NV011', maCuaHang: 'CH006',
+                    tongTien: 2200000, trangThai: 'Đã hủy',
+                    items: [{ maSanPham: 'SP001', size: 40, color: 'Đen', quantity: 1, giaBan: 2200000 }]
+                },
+                {
+                    maDonHang: 'DH012', ngayDat: '2025-05-12', maKhachHang: 'KH012', maNhanVien: 'NV011', maCuaHang: 'CH006',
+                    tongTien: 2000000, trangThai: 'Đã xác nhận',
+                    items: [{ maSanPham: 'SP001', size: 40, color: 'Đen', quantity: 1, giaBan: 2000000 }]
+                },
+                {
+                    maDonHang: 'DH013', ngayDat: '2025-05-13', maKhachHang: 'KH013', maNhanVien: 'NV013', maCuaHang: 'CH007',
+                    tongTien: 3600000, trangThai: 'Đang chờ xử lý',
+                    items: [{ maSanPham: 'SP001', size: 40, color: 'Đen', quantity: 1, giaBan: 3600000 }]
+                },
+                {
+                    maDonHang: 'DH014', ngayDat: '2025-05-14', maKhachHang: 'KH014', maNhanVien: 'NV013', maCuaHang: 'CH007',
+                    tongTien: 4200000, trangThai: 'Đã giao hàng',
+                    items: [{ maSanPham: 'SP001', size: 40, color: 'Đen', quantity: 1, giaBan: 4200000 }]
+                },
+                {
+                    maDonHang: 'DH015', ngayDat: '2025-05-15', maKhachHang: 'KH015', maNhanVien: 'NV015', maCuaHang: 'CH008',
+                    tongTien: 3800000, trangThai: 'Đang giao hàng',
+                    items: [{ maSanPham: 'SP001', size: 40, color: 'Đen', quantity: 1, giaBan: 3800000 }]
+                },
+                {
+                    maDonHang: 'DH016', ngayDat: '2025-05-16', maKhachHang: 'KH016', maNhanVien: 'NV015', maCuaHang: 'CH008',
+                    tongTien: 4000000, trangThai: 'Đã xác nhận',
+                    items: [{ maSanPham: 'SP001', size: 40, color: 'Đen', quantity: 1, giaBan: 4000000 }]
+                },
+                {
+                    maDonHang: 'DH017', ngayDat: '2025-05-17', maKhachHang: 'KH017', maNhanVien: 'NV017', maCuaHang: 'CH009',
+                    tongTien: 3900000, trangThai: 'Đang chờ xử lý',
+                    items: [{ maSanPham: 'SP001', size: 40, color: 'Đen', quantity: 1, giaBan: 3900000 }]
+                },
+                {
+                    maDonHang: 'DH018', ngayDat: '2025-05-18', maKhachHang: 'KH018', maNhanVien: 'NV017', maCuaHang: 'CH009',
+                    tongTien: 900000, trangThai: 'Đã giao hàng',
+                    items: [{ maSanPham: 'SP002', size: 39, color: 'Xanh', quantity: 1, giaBan: 900000 }]
+                },
+                {
+                    maDonHang: 'DH019', ngayDat: '2025-05-19', maKhachHang: 'KH019', maNhanVien: 'NV019', maCuaHang: 'CH010',
+                    tongTien: 2700000, trangThai: 'Đã hủy',
+                    items: [{ maSanPham: 'SP001', size: 40, color: 'Đen', quantity: 1, giaBan: 2700000 }]
+                },
+                {
+                    maDonHang: 'DH020', ngayDat: '2025-05-20', maKhachHang: 'KH020', maNhanVien: 'NV019', maCuaHang: 'CH010',
+                    tongTien: 1700000, trangThai: 'Đang giao hàng',
+                    items: [{ maSanPham: 'SP001', size: 40, color: 'Đen', quantity: 1, giaBan: 1700000 }]
+                },
+                {
+                    maDonHang: 'DH021', ngayDat: '2025-05-21', maKhachHang: 'KH021', maNhanVien: 'NV001', maCuaHang: 'CH001',
+                    tongTien: 3100000, trangThai: 'Đã xác nhận',
+                    items: [{ maSanPham: 'SP001', size: 40, color: 'Đen', quantity: 1, giaBan: 3100000 }]
+                },
+                {
+                    maDonHang: 'DH022', ngayDat: '2025-05-22', maKhachHang: 'KH022', maNhanVien: 'NV001', maCuaHang: 'CH001',
+                    tongTien: 1600000, trangThai: 'Đang chờ xử lý',
+                    items: [{ maSanPham: 'SP001', size: 40, color: 'Đen', quantity: 1, giaBan: 1600000 }]
+                },
+                {
+                    maDonHang: 'DH023', ngayDat: '2025-05-23', maKhachHang: 'KH023', maNhanVien: 'NV003', maCuaHang: 'CH002',
+                    tongTien: 4100000, trangThai: 'Đã giao hàng',
+                    items: [{ maSanPham: 'SP001', size: 40, color: 'Đen', quantity: 1, giaBan: 4100000 }]
+                },
+                {
+                    maDonHang: 'DH024', ngayDat: '2025-05-24', maKhachHang: 'KH024', maNhanVien: 'NV003', maCuaHang: 'CH002',
+                    tongTien: 2600000, trangThai: 'Đang giao hàng',
+                    items: [{ maSanPham: 'SP001', size: 40, color: 'Đen', quantity: 1, giaBan: 2600000 }]
+                },
+                {
+                    maDonHang: 'DH025', ngayDat: '2025-05-25', maKhachHang: 'KH025', maNhanVien: 'NV005', maCuaHang: 'CH003',
+                    tongTien: 3400000, trangThai: 'Đã xác nhận',
+                    items: [{ maSanPham: 'SP001', size: 40, color: 'Đen', quantity: 1, giaBan: 3400000 }]
+                },
+                {
+                    maDonHang: 'DH026', ngayDat: '2025-05-26', maKhachHang: 'KH026', maNhanVien: 'NV005', maCuaHang: 'CH003',
+                    tongTien: 2300000, trangThai: 'Đang chờ xử lý',
+                    items: [{ maSanPham: 'SP001', size: 40, color: 'Đen', quantity: 1, giaBan: 2300000 }]
+                },
+                {
+                    maDonHang: 'DH027', ngayDat: '2025-05-27', maKhachHang: 'KH027', maNhanVien: 'NV007', maCuaHang: 'CH004',
+                    tongTien: 2100000, trangThai: 'Đã giao hàng',
+                    items: [{ maSanPham: 'SP001', size: 40, color: 'Đen', quantity: 1, giaBan: 2100000 }]
+                },
+                {
+                    maDonHang: 'DH028', ngayDat: '2025-05-28', maKhachHang: 'KH028', maNhanVien: 'NV007', maCuaHang: 'CH004',
+                    tongTien: 3700000, trangThai: 'Đã hủy',
+                    items: [{ maSanPham: 'SP001', size: 40, color: 'Đen', quantity: 1, giaBan: 3700000 }]
+                },
+                {
+                    maDonHang: 'DH029', ngayDat: '2025-05-29', maKhachHang: 'KH029', maNhanVien: 'NV009', maCuaHang: 'CH005',
+                    tongTien: 4300000, trangThai: 'Đang giao hàng',
+                    items: [{ maSanPham: 'SP001', size: 40, color: 'Đen', quantity: 1, giaBan: 4300000 }]
+                },
+                {
+                    maDonHang: 'DH030', ngayDat: '2025-05-30', maKhachHang: 'KH030', maNhanVien: 'NV009', maCuaHang: 'CH005',
+                    tongTien: 3900000, trangThai: 'Đã xác nhận',
+                    items: [{ maSanPham: 'SP001', size: 40, color: 'Đen', quantity: 1, giaBan: 3900000 }]
+                }
+            ];
+
+            // History
+            history = JSON.parse(localStorage.getItem('history')) || [];
+        } catch (e) {
+            alert('Lỗi khi tải dữ liệu: ' + e.message);
+        }
+
+        let sortDirection = 1;
+        let lastSortedColumn = '';
+
+        function sortTable(column) {
+            if (lastSortedColumn === column) {
+                sortDirection *= -1;
+            } else {
+                sortDirection = 1;
+            }
+            lastSortedColumn = column;
+
+            orders.sort((a, b) => {
+                let valA = a[column] || '';
+                let valB = b[column] || '';
+                if (column === 'maKhachHang') {
+                    const customerA = customers.find(c => c.maKhachHang === valA);
+                    const customerB = customers.find(c => c.maKhachHang === valB);
+                    valA = customerA ? customerA.hoTen.toLowerCase() : '';
+                    valB = customerB ? customerB.hoTen.toLowerCase() : '';
+                } else if (column === 'ngayDat') {
+                    valA = new Date(valA);
+                    valB = new Date(valB);
+                } else if (column === 'tongTien') {
+                    valA = parseInt(valA);
+                    valB = parseInt(valB);
+                } else if (column === 'maNhanVien') {
+                    const employeeA = employees.find(e => e.maNhanVien === valA);
+                    const employeeB = employees.find(e => e.maNhanVien === valB);
+                    valA = employeeA ? employeeA.hoTen.toLowerCase() : '';
+                    valB = employeeB ? employeeB.hoTen.toLowerCase() : '';
+                } else if (column === 'maCuaHang') {
+                    const storeA = stores.find(s => s.maCuaHang === valA);
+                    const storeB = stores.find(s => s.maCuaHang === valB);
+                    valA = storeA ? storeA.tenCuaHang.toLowerCase() : '';
+                    valB = storeB ? storeB.tenCuaHang.toLowerCase() : '';
+                } else {
+                    valA = valA.toString().toLowerCase();
+                    valB = valB.toString().toLowerCase();
+                }
+                return valA > valB ? sortDirection : valA < valB ? -sortDirection : 0;
+            });
+
+            renderTable();
+        }
+
+        function renderTable() {
+            const orderBody = document.getElementById('orderBody');
+            orderBody.innerHTML = '';
+            const filterStatus = document.getElementById('filterStatus').value;
+            const filterDate = document.getElementById('filterDate').value;
+            const filterStore = document.getElementById('filterStore').value;
+            const filterCustomer = document.getElementById('filterCustomer').value;
+
+            const filteredOrders = orders.filter(order =>
+                (!filterStatus || order.trangThai === filterStatus) &&
+                (!filterDate || order.ngayDat === filterDate) &&
+                (!filterStore || order.maCuaHang === filterStore) &&
+                (!filterCustomer || order.maKhachHang === filterCustomer)
+            );
+
+            let totalRevenue = 0;
+            filteredOrders.forEach(order => {
+                const customer = customers.find(c => c.maKhachHang === order.maKhachHang);
+                const employee = employees.find(e => e.maNhanVien === order.maNhanVien);
+                const store = stores.find(s => s.maCuaHang === order.maCuaHang);
+                const itemDetails = order.items.map(item => {
+                    const product = products.find(p => p.maSanPham === item.maSanPham);
+                    return `${product.tenSanPham} (Size ${item.size}, ${item.color}: ${item.quantity})`;
+                }).join('<br>');
+                const row = document.createElement('tr');
+                row.innerHTML = `
+            <td>${order.maDonHang}</td>
+            <td>${customer ? customer.hoTen : 'Khách lẻ'}</td>
+            <td>${new Date(order.ngayDat).toLocaleDateString('vi-VN')}</td>
+            <td>${itemDetails}</td>
+            <td>${order.tongTien.toLocaleString('vi-VN')}</td>
+            <td>${order.trangThai}</td>
+            <td>${employee ? employee.hoTen : 'N/A'}</td>
+            <td>${store ? store.tenCuaHang : 'N/A'}</td>
+            <td class="actions">
+                <button class="edit-btn" aria-label="Sửa đơn hàng ${order.maDonHang}" onclick="editOrder('${order.maDonHang}')">Sửa</button>
+                <button class="delete-btn" aria-label="Xóa đơn hàng ${order.maDonHang}" onclick="deleteOrder('${order.maDonHang}')">Xóa</button>
+            </td>
+        `;
+                orderBody.appendChild(row);
+                totalRevenue += order.tongTien;
+            });
+
+            document.getElementById('totalOrders').textContent = filteredOrders.length;
+            document.getElementById('totalRevenue').textContent = totalRevenue.toLocaleString('vi-VN');
+
+            // Populate filters
+            document.getElementById('filterStore').innerHTML = '<option value="">Tất cả cửa hàng</option>' + stores.map(s => `<option value="${s.maCuaHang}">${s.tenCuaHang}</option>`).join('');
+            document.getElementById('filterCustomer').innerHTML = '<option value="">Tất cả khách hàng</option>' + customers.map(c => `<option value="${c.maKhachHang}">${c.hoTen}</option>`).join('');
+
+            // Check low stock
+            const lowStockVariants = [];
+            products.forEach(product => {
+                product.variants.forEach(variant => {
+                    if (variant.stock < MIN_STOCK_THRESHOLD) {
+                        lowStockVariants.push(`${product.tenSanPham} (Size ${variant.size}, ${variant.color}: ${variant.stock})`);
+                    }
+                });
+            });
+            const stockAlert = document.getElementById('stockAlert');
+            if (lowStockVariants.length > 0) {
+                stockAlert.style.display = 'block';
+                stockAlert.textContent = 'Cảnh báo tồn kho thấp: ' + lowStockVariants.join(', ');
+                console.log('Cảnh báo tồn kho thấp (gửi email):\n' + lowStockVariants.map(v => `- ${v}`).join('\n'));
+            } else {
+                stockAlert.style.display = 'none';
+            }
+        }
+
+        function showOrderForm(maDonHang = '') {
+            document.getElementById('orderForm').style.display = 'block';
+            const isEdit = !!maDonHang;
+            document.getElementById('editOrderId').value = maDonHang;
+            document.getElementById('orderFormTitle').textContent = isEdit ? 'Sửa Đơn hàng' : 'Tạo Đơn hàng';
+            document.getElementById('maDonHang').value = isEdit ? maDonHang : `DH${Date.now()}`;
+            document.getElementById('ngayDat').value = isEdit ? orders.find(o => o.maDonHang === maDonHang).ngayDat : new Date().toISOString().split('T')[0];
+            document.getElementById('trangThai').value = isEdit ? orders.find(o => o.maDonHang === maDonHang).trangThai : 'Đang chờ xử lý';
+
+            // Populate dropdowns
+            const customerSelect = document.getElementById('maKhachHang');
+            customerSelect.innerHTML = '<option value="">Chọn khách hàng</option>' + customers.map(c => `<option value="${c.maKhachHang}">${c.hoTen} (${c.soDienThoai})</option>`).join('') + '<option value="new">Thêm khách hàng mới</option>';
+
+            const employeeSelect = document.getElementById('maNhanVien');
+            employeeSelect.innerHTML = '<option value="">Chọn nhân viên</option>' + employees.map(e => `<option value="${e.maNhanVien}">${e.hoTen}</option>`).join('');
+
+            const storeSelect = document.getElementById('maCuaHang');
+            storeSelect.innerHTML = '<option value="">Chọn cửa hàng</option>' + stores.map(s => `<option value="${s.maCuaHang}">${s.tenCuaHang}</option>`).join('');
+
+            const itemBody = document.getElementById('orderItems');
+            itemBody.innerHTML = '';
+            if (isEdit) {
+                const order = orders.find(o => o.maDonHang === maDonHang);
+                customerSelect.value = order.maKhachHang;
+                employeeSelect.value = order.maNhanVien || '';
+                storeSelect.value = order.maCuaHang || '';
+                order.items.forEach(item => {
+                    const product = products.find(p => p.maSanPham === item.maSanPham);
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                <tr>
+                    <td>
+                        <select class="item-product" onchange="updateItemRow(this)">
+                            <option value="">Chọn sản phẩm</option>
+                            ${products.map(p => `<option value="${p.maSanPham}" ${p.maSanPham === item.maSanPham ? 'selected' : ''}>${p.tenSanPham}</option>`).join('')}
+                        </select>
+                    </td>
+                    <td>
+                        <select class="item-size" onchange="updateItemRow(this)">
+                            <option value="">Chọn kích cỡ</option>
+                            ${products.find(p => p.maSanPham === item.maSanPham).variants.map(v => `<option value="${v.size}" ${v.size === item.size ? 'selected' : ''}>${v.size}</option>`).join('')}
+                        </select>
+                    </td>
+                    <td>
+                        <select class="item-color" onchange="updateItemRow(this)">
+                            <option value="">Chọn màu sắc</option>
+                            ${products.find(p => p.maSanPham === item.maSanPham).variants.map(v => `<option value="${v.color}" ${v.color === item.color ? 'selected' : ''}>${v.color}</option>`).join('')}
+                        </select>
+                    </td>
+                    <td><input type="number" class="item-quantity" min="1" value="${item.quantity}" onchange="updateTempTotal()"></td>
+                    <td>${product.giaBan.toLocaleString('vi-VN')} VND</td>
+                    <td><button onclick="this.parentElement.parentElement.remove(); updateTempTotal()">Xóa</button> <button onclick="addOrderItemRow()">Thêm</button></td>
+                </tr>
+            `;
+                    itemBody.appendChild(row);
+                });
+            } else {
+                addOrderItemRow();
+            }
+
+            updateTempTotal();
+        }
+
+        function updateItemRow(selectElement) {
+            const maSanPham = selectElement.value;
+            const row = selectElement.closest('tr');
+            const sizeSelect = row.querySelector('.item-size');
+            const colorSelect = row.querySelector('.item-color');
+            sizeSelect.innerHTML = '<option value="">Chọn kích cỡ</option>';
+            colorSelect.innerHTML = '<option value="">Chọn màu sắc</option>';
+
+            if (maSanPham) {
+                const product = products.find(p => p.maSanPham === maSanPham);
+                const sizes = [...new Set(product.variants.map(v => v.size))];
+                const colors = [...new Set(product.variants.map(v => v.color))];
+                sizes.forEach(s => sizeSelect.innerHTML += `<option value="${s}">${s}</option>`);
+                colors.forEach(c => colorSelect.innerHTML += `<option value="${c}">${c}</option>`);
+            }
+            updateTempTotal();
+        }
+
+        function updateTempTotal() {
+            let tempTotal = 0;
+            const itemRows = document.querySelectorAll('#orderItems tr');
+            for (let row of itemRows) {
+                const maSanPham = row.querySelector('.item-product').value;
+                const quantity = parseInt(row.querySelector('.item-quantity').value) || 0;
+                if (maSanPham && quantity > 0) {
+                    const product = products.find(p => p.maSanPham === maSanPham);
+                    tempTotal += quantity * product.giaBan;
+                }
+            }
+            document.getElementById('tempTotal').textContent = tempTotal.toLocaleString('vi-VN');
+        }
+
+        function addOrderItemRow() {
+            const itemBody = document.getElementById('orderItems');
+            const row = document.createElement('tr');
+            row.innerHTML = `
+        <tr>
+            <td>
+                <select class="item-product" onchange="updateItemRow(this)">
+                    <option value="">Chọn sản phẩm</option>
+                    ${products.map(p => `<option value="${p.maSanPham}">${p.tenSanPham}</option>`).join('')}
+                </select>
+            </td>
+            <td><select class="item-size"></select></td>
+            <td><select class="item-color"></select></td>
+            <td><input type="number" class="item-quantity" min="1" onchange="updateTempTotal()"></td>
+            <td>-</td>
+            <td><button onclick="this.parentElement.parentElement.remove(); updateTempTotal()">Xóa</button> <button onclick="addOrderItemRow()">Thêm</button></td>
+        </tr>
+    `;
+            itemBody.appendChild(row);
+        }
+
+        function saveOrder() {
+            const maDonHang = document.getElementById('maDonHang').value.trim();
+            const maKhachHang = document.getElementById('maKhachHang').value;
+            const ngayDat = document.getElementById('ngayDat').value;
+            const trangThai = document.getElementById('trangThai').value;
+            const maNhanVien = document.getElementById('maNhanVien').value;
+            const maCuaHang = document.getElementById('maCuaHang').value;
+            const isEdit = document.getElementById('editOrderId').value !== '';
+            const items = [];
+
+            // Validation
+            if (!maDonHang || !maKhachHang || !ngayDat || !trangThai || !maNhanVien || !maCuaHang) {
+                alert('Vui lòng điền đầy đủ thông tin đơn hàng.');
+                return;
+            }
+
+            if (maKhachHang === 'new') {
+                document.getElementById('orderForm').style.display = 'none';
+                showCustomerForm();
+                return;
+            }
+
+            if (!employees.some(e => e.maNhanVien === maNhanVien)) {
+                alert('Mã nhân viên không hợp lệ.');
+                return;
+            }
+            if (!stores.some(s => s.maCuaHang === maCuaHang)) {
+                alert('Mã cửa hàng không hợp lệ.');
+                return;
+            }
+
+            const existingOrderIndex = orders.findIndex(o => o.maDonHang === maDonHang);
+            if (!isEdit && existingOrderIndex !== -1) {
+                alert('Mã đơn hàng đã tồn tại.');
+                return;
+            }
+
+            const itemRows = document.querySelectorAll('#orderItems tr');
+            for (let row of itemRows) {
+                const maSanPham = row.querySelector('.item-product').value;
+                const size = parseInt(row.querySelector('.item-size').value);
+                const color = row.querySelector('.item-color').value;
+                const quantity = parseInt(row.querySelector('.item-quantity').value);
+
+                if (maSanPham && !isNaN(size) && color && !isNaN(quantity) && quantity > 0) {
+                    const product = products.find(p => p.maSanPham === maSanPham);
+                    const variant = product.variants.find(v => v.size === size && v.color === color);
+                    if (!variant || variant.stock < quantity) {
+                        alert(`Số lượng tồn kho không đủ cho ${product.tenSanPham} (Size ${size}, ${color}).`);
+                        return;
+                    }
+                    items.push({ maSanPham, size, color, quantity, giaBan: product.giaBan });
+                }
+            }
+
+            if (items.length === 0) {
+                alert('Vui lòng chọn ít nhất một sản phẩm hợp lệ.');
+                return;
+            }
+
+            // Revert stock for edited order
+            if (isEdit) {
+                const oldOrder = orders[existingOrderIndex];
+                oldOrder.items.forEach(item => {
+                    const product = products.find(p => p.maSanPham === item.maSanPham);
+                    const variant = product.variants.find(v => v.size === item.size && v.color === item.color);
+                    variant.stock += item.quantity;
+                    history.push({
+                        time: new Date().toLocaleString('vi-VN'),
+                        type: 'Hoàn nhập',
+                        maSanPham: item.maSanPham,
+                        size: item.size,
+                        color: item.color,
+                        quantity: item.quantity,
+                        note: `Sửa đơn hàng ${maDonHang}`
+                    });
+                });
+            }
+
+            // Update stock for new/edited order
+            items.forEach(item => {
+                const product = products.find(p => p.maSanPham === item.maSanPham);
+                const variant = product.variants.find(v => v.size === item.size && v.color === item.color);
+                variant.stock -= item.quantity;
+                history.push({
+                    time: new Date().toLocaleString('vi-VN'),
+                    type: 'Xuất',
+                    maSanPham: item.maSanPham,
+                    size: item.size,
+                    color: item.color,
+                    quantity: -item.quantity,
+                    note: `Đơn hàng ${maDonHang} - Cửa hàng ${maCuaHang} - Nhân viên ${maNhanVien}`
+                });
+            });
+
+            const tongTien = items.reduce((total, item) => total + item.quantity * item.giaBan, 0);
+            const order = { maDonHang, maKhachHang, ngayDat, items, tongTien, trangThai, maNhanVien, maCuaHang };
+
+            try {
+                if (isEdit) {
+                    orders[existingOrderIndex] = order;
+                } else {
+                    orders.push(order);
+                }
+                localStorage.setItem('orders', JSON.stringify(orders));
+                localStorage.setItem('products', JSON.stringify(products));
+                localStorage.setItem('history', JSON.stringify(history));
+                document.getElementById('orderForm').style.display = 'none';
+                renderTable();
+            } catch (e) {
+                alert('Lỗi khi lưu dữ liệu: ' + e.message);
+            }
+        }
+
+        function deleteOrder(maDonHang) {
+            const order = orders.find(o => o.maDonHang === maDonHang);
+            if (order.trangThai === 'Đã giao hàng') {
+                alert('Không thể xóa đơn hàng đã giao.');
+                return;
+            }
+            if (!confirm(`Bạn có chắc muốn xóa đơn hàng ${maDonHang}?`)) return;
+
+            // Revert stock
+            order.items.forEach(item => {
+                const product = products.find(p => p.maSanPham === item.maSanPham);
+                const variant = product.variants.find(v => v.size === item.size && v.color === item.color);
+                variant.stock += item.quantity;
+                history.push({
+                    time: new Date().toLocaleString('vi-VN'),
+                    type: 'Hoàn nhập',
+                    maSanPham: item.maSanPham,
+                    size: item.size,
+                    color: item.color,
+                    quantity: item.quantity,
+                    note: `Xóa đơn hàng ${maDonHang}`
+                });
+            });
+
+            orders = orders.filter(o => o.maDonHang !== maDonHang);
+            try {
+                localStorage.setItem('orders', JSON.stringify(orders));
+                localStorage.setItem('products', JSON.stringify(products));
+                localStorage.setItem('history', JSON.stringify(history));
+                renderTable();
+            } catch (e) {
+                alert('Lỗi khi xóa dữ liệu: ' + e.message);
+            }
+        }
+
+        function cancelOrderForm() {
+            document.getElementById('orderForm').style.display = 'none';
+            document.getElementById('editOrderId').value = '';
+        }
+
+        function showCustomerForm() {
+            document.getElementById('customerForm').style.display = 'block';
+            document.getElementById('newMaKhachHang').value = `KH${Date.now()}`;
+            document.getElementById('newHoTen').value = '';
+            document.getElementById('newSoDienThoai').value = '';
+            document.getElementById('newDiaChi').value = '';
+            document.getElementById('newEmail').value = '';
+        }
+
+        function saveNewCustomer() {
+            const maKhachHang = document.getElementById('newMaKhachHang').value.trim();
+            const hoTen = document.getElementById('newHoTen').value.trim();
+            const soDienThoai = document.getElementById('newSoDienThoai').value.trim();
+            const diaChi = document.getElementById('newDiaChi').value.trim();
+            const email = document.getElementById('newEmail').value.trim();
+
+            // Validation
+            if (!maKhachHang || !hoTen || !soDienThoai || !diaChi) {
+                alert('Vui lòng điền đầy đủ thông tin bắt buộc.');
+                return;
+            }
+
+            const phoneRegex = /^\d{10}$/;
+            if (!phoneRegex.test(soDienThoai)) {
+                alert('Số điện thoại phải có 10 chữ số.');
+                return;
+            }
+
+            if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+                alert('Email không hợp lệ.');
+                return;
+            }
+
+            if (customers.some(c => c.maKhachHang === maKhachHang)) {
+                alert('Mã khách hàng đã tồn tại.');
+                return;
+            }
+
+            const customer = { maKhachHang, hoTen, soDienThoai, diaChi, email };
+            try {
+                customers.push(customer);
+                localStorage.setItem('customers', JSON.stringify(customers));
+                document.getElementById('customerForm').style.display = 'none';
+                showOrderForm();
+                document.getElementById('maKhachHang').value = maKhachHang;
+            } catch (e) {
+                alert('Lỗi khi lưu dữ liệu: ' + e.message);
+            }
+        }
+
+        function cancelCustomerForm() {
+            document.getElementById('customerForm').style.display = 'none';
+            showOrderForm();
+        }
+
+        // New function for order lookup
+        function searchOrder() {
+            const maDonHang = document.getElementById('maDonHangSearch').value.trim().toUpperCase();
+            const orderResult = document.getElementById('orderResult');
+
+            if (!maDonHang) {
+                orderResult.className = 'error';
+                orderResult.textContent = 'Vui lòng nhập mã đơn hàng.';
+                return;
+            }
+
+            const order = orders.find(o => o.maDonHang === maDonHang);
+            if (!order) {
+                orderResult.className = 'error';
+                orderResult.textContent = 'Đơn hàng không tìm thấy.';
+                return;
+            }
+
+            const customer = customers.find(c => c.maKhachHang === order.maKhachHang);
+            orderResult.className = 'success';
+            orderResult.innerHTML = `
+        <strong>Mã Đơn hàng:</strong> ${order.maDonHang}<br>
+        <strong>Ngày đặt:</strong> ${new Date(order.ngayDat).toLocaleDateString('vi-VN')}<br>
+        <strong>Khách hàng:</strong> ${customer ? customer.hoTen : 'Khách lẻ'}<br>
+        <strong>Trạng thái:</strong> ${order.trangThai}<br>
+        <strong>Tổng tiền:</strong> ${order.tongTien.toLocaleString('vi-VN')} VND
+    `;
+
+            history.push({
+                time: new Date().toLocaleString('vi-VN'),
+                type: 'Tra cứu',
+                maDonHang: maDonHang,
+                note: `Tra cứu đơn hàng ${maDonHang}`
+            });
+            try {
+                localStorage.setItem('history', JSON.stringify(history));
+            } catch (e) {
+                alert('Lỗi khi lưu lịch sử hoạt động: ' + e.message);
+            }
+        }
+
+        // Initialize filters and render
+        document.getElementById('filterStatus').addEventListener('change', renderTable);
+        document.getElementById('filterDate').addEventListener('change', renderTable);
+        document.getElementById('filterStore').addEventListener('change', renderTable);
+        document.getElementById('filterCustomer').addEventListener('change', renderTable);
+        renderTable();
+    </script>
+</body>
+
+</html>
