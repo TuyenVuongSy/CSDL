@@ -57,6 +57,11 @@
             background-color: #45a049;
         }
 
+        .search-bar select {
+            padding: 5px;
+            margin-right: 10px;
+        }
+
         table {
             width: 100%;
             border-collapse: collapse;
@@ -88,8 +93,20 @@
             border: none;
         }
 
-        .delete-btn {
+        .delete-btn,
+        .refund-btn {
             background-color: #f44336;
+            color: white;
+            border: none;
+        }
+
+        .refund-btn {
+            background-color: #FFC107;
+            color: black;
+        }
+
+        .view-btn {
+            background-color: #4CAF50;
             color: white;
             border: none;
         }
@@ -108,7 +125,8 @@
         }
 
         .form-container input,
-        .form-container select {
+        .form-container select,
+        .form-container textarea {
             width: 100%;
             padding: 5px;
             box-sizing: border-box;
@@ -157,9 +175,11 @@
                 <button id="tabActivity" onclick="showTab('activity')">Lịch sử Hoạt động</button>
                 <button id="tabProducts" onclick="showTab('products')">Sản phẩm</button>
                 <button id="tabInventory" onclick="showTab('inventory')">Tồn kho</button>
+                <button id="tabImports" onclick="showTab('imports')">Nhập kho</button>
                 <button id="tabCustomers" onclick="showTab('customers')">Khách hàng</button>
                 <button id="tabOrders" onclick="showTab('orders')">Đơn hàng</button>
                 <button id="tabPayments" onclick="showTab('payments')">Thanh toán</button>
+                <button id="tabStatistics" onclick="showTab('statistics')">Thống kê</button>
             </div>
             <button onclick="logout()">Đăng xuất</button>
         </div>
@@ -209,6 +229,97 @@
         <div id="imports" class="tab-content">
             <p>Chức năng Quản lý Nhập kho</p>
         </div>
+        <div id="customers" class="tab-content">
+            <p>Chức năng Quản lý Khách hàng (Tích hợp từ customers.html)</p>
+        </div>
+        <div id="orders" class="tab-content">
+            <p>Chức năng Quản lý Đơn hàng (Tích hợp từ orders.html)</p>
+        </div>
+
+        <div id="payments" class="tab-content">
+            <div class="header">
+                <h3>Quản lý Thanh toán</h3>
+                <div class="search-bar">
+                    <select id="filterStatus" onchange="renderPayments()">
+                        <option value="">Tất cả trạng thái</option>
+                        <option value="Đã thanh toán">Đã thanh toán</option>
+                        <option value="Chưa thanh toán">Chưa thanh toán</option>
+                        <option value="Hoàn tiền">Hoàn tiền</option>
+                    </select>
+                </div>
+                <button class="add-btn" onclick="showPaymentForm()">Thêm Thanh toán</button>
+            </div>
+
+            <table id="paymentTable" role="grid">
+                <thead>
+                    <tr>
+                        <th onclick="sortPayments('maThanhToan')">Mã Thanh toán</th>
+                        <th onclick="sortPayments('maDonHang')">Mã Đơn hàng</th>
+                        <th onclick="sortPayments('thoiGian')">Thời gian</th>
+                        <th onclick="sortPayments('soTien')">Số tiền (VND)</th>
+                        <th onclick="sortPayments('hinhThuc')">Hình thức</th>
+                        <th onclick="sortPayments('trangThai')">Trạng thái</th>
+                        <th onclick="sortPayments('maGiaoDich')">Mã Giao dịch</th>
+                        <th onclick="sortPayments('ghiChu')">Ghi chú</th>
+                        <th>Hành động</th>
+                    </tr>
+                </thead>
+                <tbody id="paymentBody"></tbody>
+            </table>
+
+            <div id="paymentForm" class="form-container">
+                <h3 id="paymentFormTitle">Thêm Thanh toán</h3>
+                <label for="maThanhToan">Mã Thanh toán:</label>
+                <input type="text" id="maThanhToan" required>
+                <label for="maDonHang">Mã Đơn hàng:</label>
+                <select id="maDonHang" required>
+                    <option value="">Chọn đơn hàng</option>
+                </select>
+                <label for="thoiGian">Thời gian:</label>
+                <input type="datetime-local" id="thoiGian" required>
+                <label for="soTien">Số tiền (VND):</label>
+                <input type="number" id="soTien" min="0" required>
+                <label for="hinhThuc">Hình thức:</label>
+                <select id="hinhThuc" required>
+                    <option value="Tiền mặt">Tiền mặt</option>
+                    <option value="Chuyển khoản">Chuyển khoản</option>
+                    <option value="Momo">Momo</option>
+                    <option value="ZaloPay">ZaloPay</option>
+                </select>
+                <label for="trangThai">Trạng thái:</label>
+                <select id="trangThai" required>
+                    <option value="Đã thanh toán">Đã thanh toán</option>
+                    <option value="Chưa thanh toán">Chưa thanh toán</option>
+                </select>
+                <label for="maGiaoDich">Mã Giao dịch:</label>
+                <input type="text" id="maGiaoDich" placeholder="VD: GD001">
+                <label for="ghiChu">Ghi chú:</label>
+                <textarea id="ghiChu" placeholder="Thông tin bổ sung"></textarea>
+                <button onclick="savePayment()">Lưu</button>
+                <button onclick="cancelPaymentForm()">Hủy</button>
+            </div>
+
+            <div id="refundForm" class="form-container">
+                <h3>Hoàn tiền</h3>
+                <label for="maHoanTien">Mã Hoàn tiền:</label>
+                <input type="text" id="maHoanTien" required>
+                <label for="maThanhToanRefund">Mã Thanh toán:</label>
+                <input type="text" id="maThanhToanRefund" readonly>
+                <label for="thoiGianHoan">Thời gian:</label>
+                <input type="datetime-local" id="thoiGianHoan" required>
+                <label for="soTienHoan">Số tiền hoàn (VND):</label>
+                <input type="number" id="soTienHoan" min="0" required>
+                <label for="lyDo">Lý do hoàn tiền:</label>
+                <textarea id="lyDo" required></textarea>
+                <button onclick="saveRefund()">Lưu</button>
+                <button onclick="cancelRefundForm()">Hủy</button>
+            </div>
+
+            <div class="summary">
+                <p>Tổng số thanh toán: <span id="totalPayments">0</span></p>
+            </div>
+        </div>
+
         <div id="statistics" class="tab-content">
             <h3>Thống kê cơ bản</h3>
             <div class="report-section">
@@ -265,15 +376,6 @@
                 <button class="add-btn" onclick="exportTopProductsCSV()">Xuất CSV</button>
             </div>
         </div>
-        <div id="customers" class="tab-content">
-            <p>Chức năng Quản lý Khách hàng (Tích hợp từ customers.html)</p>
-        </div>
-        <div id="orders" class="tab-content">
-            <p>Chức năng Quản lý Đơn hàng (Tích hợp từ orders.html)</p>
-        </div>
-        <div id="payments" class="tab-content">
-            <p>Chức năng Quản lý Thanh toán (Tích hợp từ payments.html)</p>
-        </div>
 
         <div id="employeeForm" class="form-container">
             <h3 id="employeeFormTitle">Thêm Nhân viên</h3>
@@ -310,6 +412,7 @@
         let orderDetails = [];
         let products = [];
         let payments = [];
+        let refunds = [];
         let imports = [];
         let stores = [];
         let currentEmployee = null;
@@ -352,9 +455,11 @@
                 { maDonHang: 'DH003', maSanPham: 'SP002', kichCo: 'M', mauSac: 'Đen', soLuong: 3, donGia: 500000 }
             ];
             payments = JSON.parse(localStorage.getItem('payments')) || [
-                { maThanhToan: 'TT001', maDonHang: 'DH001', thoiGian: '2025-05-01T10:00', soTien: 4500000, hinhThuc: 'Tiền mặt', trangThai: 'Đã thanh toán', maGiaoDich: null, ghiChu: null },
-                { maThanhToan: 'TT002', maDonHang: 'DH002', thoiGian: '2025-05-15T12:00', soTien: 800000, hinhThuc: 'Momo', trangThai: 'Đã thanh toán', maGiaoDich: 'MOMO123', ghiChu: null }
+                { maThanhToan: 'TT001', maDonHang: 'DH001', thoiGian: '2025-05-01T10:00:00Z', soTien: 4500000, hinhThuc: 'Tiền mặt', trangThai: 'Đã thanh toán', maGiaoDich: null, ghiChu: null },
+                { maThanhToan: 'TT002', maDonHang: 'DH002', thoiGian: '2025-05-15T12:00:00Z', soTien: 800000, hinhThuc: 'Momo', trangThai: 'Đã thanh toán', maGiaoDich: 'MOMO123', ghiChu: null },
+                { maThanhToan: 'TT003', maDonHang: 'DH003', thoiGian: '2025-06-03T14:00:00Z', soTien: 0, hinhThuc: 'Chưa thanh toán', trangThai: 'Chưa thanh toán', maGiaoDich: null, ghiChu: 'Đang chờ xử lý' }
             ];
+            refunds = JSON.parse(localStorage.getItem('refunds')) || [];
             imports = JSON.parse(localStorage.getItem('imports')) || [
                 { maNhapKho: 'NK001', maNhanVien: 'NV002', maCuaHang: 'CH001', ngayNhap: '2025-04-01', tongSoLuong: 100, ghiChu: 'Nhập lô giày mới' }
             ];
@@ -398,29 +503,30 @@
             tabs.innerHTML = '';
             if (chucVu === 'Quản lý') {
                 tabs.innerHTML = `
-            <button id="tabEmployees" class="active" onclick="showTab('employees')">Nhân viên</button>
-            <button id="tabActivity" onclick="showTab('activity')">Lịch sử Hoạt động</button>
-            <button id="tabProducts" onclick="showTab('products')">Sản phẩm</button>
-            <button id="tabInventory" onclick="showTab('inventory')">Tồn kho</button>
-            <button id="tabCustomers" onclick="showTab('customers')">Khách hàng</button>
-            <button id="tabOrders" onclick="showTab('orders')">Đơn hàng</button>
-            <button id="tabPayments" onclick="showTab('payments')">Thanh toán</button>
-            <button id="tabStatistics" onclick="showTab('statistics')">Thống kê</button>
-        `;
+                    <button id="tabEmployees" class="active" onclick="showTab('employees')">Nhân viên</button>
+                    <button id="tabActivity" onclick="showTab('activity')">Lịch sử Hoạt động</button>
+                    <button id="tabProducts" onclick="showTab('products')">Sản phẩm</button>
+                    <button id="tabInventory" onclick="showTab('inventory')">Tồn kho</button>
+                    <button id="tabImports" onclick="showTab('imports')">Nhập kho</button>
+                    <button id="tabCustomers" onclick="showTab('customers')">Khách hàng</button>
+                    <button id="tabOrders" onclick="showTab('orders')">Đơn hàng</button>
+                    <button id="tabPayments" onclick="showTab('payments')">Thanh toán</button>
+                    <button id="tabStatistics" onclick="showTab('statistics')">Thống kê</button>
+                `;
                 showTab('employees');
             } else if (chucVu === 'Nhân viên bán hàng') {
                 tabs.innerHTML = `
-            <button id="tabProducts" class="active" onclick="showTab('products')">Sản phẩm</button>
-            <button id="tabCustomers" onclick="showTab('customers')">Khách hàng</button>
-            <button id="tabOrders" onclick="showTab('orders')">Đơn hàng</button>
-            <button id="tabPayments" onclick="showTab('payments')">Thanh toán</button>
-        `;
+                    <button id="tabProducts" class="active" onclick="showTab('products')">Sản phẩm</button>
+                    <button id="tabCustomers" onclick="showTab('customers')">Khách hàng</button>
+                    <button id="tabOrders" onclick="showTab('orders')">Đơn hàng</button>
+                    <button id="tabPayments" onclick="showTab('payments')">Thanh toán</button>
+                `;
                 showTab('products');
             } else if (chucVu === 'Nhân viên kho') {
                 tabs.innerHTML = `
-            <button id="tabInventory" class="active" onclick="showTab('inventory')">Tồn kho</button>
-            <button id="tabImports" onclick="showTab('imports')">Nhập kho</button>
-        `;
+                    <button id="tabInventory" class="active" onclick="showTab('inventory')">Tồn kho</button>
+                    <button id="tabImports" onclick="showTab('imports')">Nhập kho</button>
+                `;
                 showTab('inventory');
             }
         }
@@ -434,6 +540,7 @@
             if (tabId === 'employees') renderEmployees();
             else if (tabId === 'activity') renderActivity();
             else if (tabId === 'imports') renderImports();
+            else if (tabId === 'payments') renderPayments();
             else if (tabId === 'statistics') {
                 renderRevenueReport();
                 renderInventoryReport();
@@ -483,6 +590,33 @@
             renderActivity();
         }
 
+        function sortPayments(column) {
+            if (lastSortedColumn === column) {
+                sortDirection *= -1;
+            } else {
+                sortDirection = 1;
+            }
+            lastSortedColumn = column;
+
+            payments.sort((a, b) => {
+                let valA = a[column] || '';
+                let valB = b[column] || '';
+                if (column === 'thoiGian') {
+                    valA = new Date(valA);
+                    valB = new Date(valB);
+                } else if (column === 'soTien') {
+                    valA = parseInt(valA);
+                    valB = parseInt(valB);
+                } else {
+                    valA = valA.toString().toLowerCase();
+                    valB = valB.toString().toLowerCase();
+                }
+                return valA > valB ? sortDirection : valA < valB ? -sortDirection : 0;
+            });
+
+            renderPayments();
+        }
+
         function renderEmployees() {
             if (currentEmployee.chucVu !== 'Quản lý') {
                 return;
@@ -494,20 +628,20 @@
                 const store = stores.find(s => s.maCuaHang === employee.maCuaHang);
                 const row = document.createElement('tr');
                 row.innerHTML = `
-            <td>${employee.maNhanVien}</td>
-            <td>${employee.hoTen}</td>
-            <td>${employee.soDienThoai}</td>
-            <td>${employee.gioiTinh}</td>
-            <td>${employee.chucVu}</td>
-            <td>${employee.maCuaHang} (${store ? store.tenCuaHang : 'Không xác định'})</td>
-            <td>${new Date(employee.ngayVaoLam).toLocaleDateString('vi-VN')}</td>
-            <td class="actions">
-                <button class="edit-btn" aria-label="Sửa nhân viên ${employee.hoTen}" onclick="editEmployee('${employee.maNhanVien}')">Sửa</button>
-                <button class="delete-btn" aria-label="Xóa nhân viên ${employee.hoTen}" onclick="deleteEmployee('${employee.maNhanVien}')">Xóa</button>
-                <button class="view-btn" aria-label="Xem đơn hàng ${employee.maNhanVien}" onclick="viewEmployeeOrders('${employee.maNhanVien}')">Đơn hàng</button>
-                <button class="view-btn" aria-label="Xem nhập kho ${employee.maNhanVien}" onclick="viewEmployeeImports('${employee.maNhanVien}')">Nhập kho</button>
-            </td>
-        `;
+                    <td>${employee.maNhanVien}</td>
+                    <td>${employee.hoTen}</td>
+                    <td>${employee.soDienThoai}</td>
+                    <td>${employee.gioiTinh}</td>
+                    <td>${employee.chucVu}</td>
+                    <td>${employee.maCuaHang} (${store ? store.tenCuaHang : 'Không xác định'})</td>
+                    <td>${new Date(employee.ngayVaoLam).toLocaleDateString('vi-VN')}</td>
+                    <td class="actions">
+                        <button class="edit-btn" aria-label="Sửa nhân viên ${employee.hakar}" onclick="editEmployee('${employee.maNhanVien}')">Sửa</button>
+                        <button class="delete-btn" aria-label="Xóa nhân viên ${employee.hoTen}" onclick="deleteEmployee('${employee.maNhanVien}')">Xóa</button>
+                        <button class="view-btn" aria-label="Xem đơn hàng ${employee.maNhanVien}" onclick="viewEmployeeOrders('${employee.maNhanVien}')">Đơn hàng</button>
+                        <button class="view-btn" aria-label="Xem nhập kho ${employee.maNhanVien}" onclick="viewEmployeeImports('${employee.maNhanVien}')">Nhập kho</button>
+                    </td>
+                `;
                 employeeBody.appendChild(row);
             });
 
@@ -525,11 +659,11 @@
                 const employee = employees.find(e => e.maNhanVien === activity.maNhanVien);
                 const row = document.createElement('tr');
                 row.innerHTML = `
-            <td>${new Date(activity.thoiGian).toLocaleString('vi-VN')}</td>
-            <td>${employee ? employee.hoTen : activity.maNhanVien}</td>
-            <td>${activity.loaiHanhDong}</td>
-            <td>${activity.chiTiet}</td>
-        `;
+                    <td>${new Date(activity.thoiGian).toLocaleString('vi-VN')}</td>
+                    <td>${employee ? employee.hoTen : activity.maNhanVien}</td>
+                    <td>${activity.loaiHanhDong}</td>
+                    <td>${activity.chiTiet}</td>
+                `;
                 activityBody.appendChild(row);
             });
         }
@@ -540,20 +674,20 @@
             }
             const importsTab = document.getElementById('imports');
             importsTab.innerHTML = `
-        <h3>Danh sách Nhập kho</h3>
-        <table id="importsTable" role="grid">
-            <thead>
-                <tr>
-                    <th>Mã Nhập kho</th>
-                    <th>Cửa hàng</th>
-                    <th>Ngày nhập</th>
-                    <th>Tổng số lượng</th>
-                    <th>Ghi chú</th>
-                </tr>
-            </thead>
-            <tbody id="importsBody"></tbody>
-        </table>
-    `;
+                <h3>Danh sách Nhập kho</h3>
+                <table id="importsTable" role="grid">
+                    <thead>
+                        <tr>
+                            <th>Mã Nhập kho</th>
+                            <th>Cửa hàng</th>
+                            <th>Ngày nhập</th>
+                            <th>Tổng số lượng</th>
+                            <th>Ghi chú</th>
+                        </tr>
+                    </thead>
+                    <tbody id="importsBody"></tbody>
+                </table>
+            `;
 
             const importsBody = document.getElementById('importsBody');
             importsBody.innerHTML = '';
@@ -562,14 +696,47 @@
                 const store = stores.find(s => s.maCuaHang === imp.maCuaHang);
                 const row = document.createElement('tr');
                 row.innerHTML = `
-            <td>${imp.maNhapKho}</td>
-            <td>${imp.maCuaHang} (${store ? store.tenCuaHang : 'Không xác định'})</td>
-            <td>${new Date(imp.ngayNhap).toLocaleDateString('vi-VN')}</td>
-            <td>${imp.tongSoLuong}</td>
-            <td>${imp.ghiChu || '-'}</td>
-        `;
+                    <td>${imp.maNhapKho}</td>
+                    <td>${imp.maCuaHang} (${store ? store.tenCuaHang : 'Không xác định'})</td>
+                    <td>${new Date(imp.ngayNhap).toLocaleDateString('vi-VN')}</td>
+                    <td>${imp.tongSoLuong}</td>
+                    <td>${imp.ghiChu || '-'}</td>
+                `;
                 importsBody.appendChild(row);
             });
+        }
+
+        function renderPayments() {
+            if (currentEmployee.chucVu !== 'Quản lý' && currentEmployee.chucVu !== 'Nhân viên bán hàng') {
+                return;
+            }
+            const paymentBody = document.getElementById('paymentBody');
+            paymentBody.innerHTML = '';
+            const filterStatus = document.getElementById('filterStatus').value;
+
+            const filteredPayments = payments.filter(payment => !filterStatus || payment.trangThai === filterStatus);
+
+            filteredPayments.forEach(payment => {
+                const order = orders.find(o => o.maDonHang === payment.maDonHang);
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${payment.maThanhToan}</td>
+                    <td>${payment.maDonHang}</td>
+                    <td>${new Date(payment.thoiGian).toLocaleString('vi-VN')}</td>
+                    <td>${payment.soTien.toLocaleString('vi-VN')}</td>
+                    <td>${payment.hinhThuc}</td>
+                    <td>${payment.trangThai}</td>
+                    <td>${payment.maGiaoDich || '-'}</td>
+                    <td>${payment.ghiChu || '-'}</td>
+                    <td class="actions">
+                        <button class="edit-btn" aria-label="Sửa thanh toán ${payment.maThanhToan}" onclick="editPayment('${payment.maThanhToan}')" ${payment.trangThai === 'Hoàn tiền' || (currentEmployee.chucVu !== 'Quản lý' && currentEmployee.chucVu !== 'Nhân viên bán hàng') ? 'disabled' : ''}>Sửa</button>
+                        <button class="refund-btn" aria-label="Hoàn tiền ${payment.maThanhToan}" onclick="showRefundForm('${payment.maThanhToan}')" ${payment.trangThai !== 'Đã thanh toán' || currentEmployee.chucVu !== 'Quản lý' ? 'disabled' : ''}>Hoàn tiền</button>
+                    </td>
+                `;
+                paymentBody.appendChild(row);
+            });
+
+            document.getElementById('totalPayments').textContent = filteredPayments.length;
         }
 
         function showEmployeeForm() {
@@ -703,33 +870,33 @@
 
             const ordersTab = document.getElementById('employees');
             ordersTab.innerHTML = `
-        <h3>Đơn hàng của ${employee.hoTen} (${maNhanVien})</h3>
-        <button class="add-btn" onclick="renderEmployees()">Quay lại</button>
-        <table id="employeeOrdersTable" role="grid">
-            <thead>
-                <tr>
-                    <th>Mã Đơn hàng</th>
-                    <th>Khách hàng</th>
-                    <th>Ngày đặt</th>
-                    <th>Tổng tiền</th>
-                    <th>Trạng thái</th>
-                </tr>
-            </thead>
-            <tbody id="employeeOrdersBody"></tbody>
-        </table>
-    `;
+                <h3>Đơn hàng của ${employee.hoTen} (${maNhanVien})</h3>
+                <button class="add-btn" onclick="renderEmployees()">Quay lại</button>
+                <table id="employeeOrdersTable" role="grid">
+                    <thead>
+                        <tr>
+                            <th>Mã Đơn hàng</th>
+                            <th>Khách hàng</th>
+                            <th>Ngày đặt</th>
+                            <th>Tổng tiền</th>
+                            <th>Trạng thái</th>
+                        </tr>
+                    </thead>
+                    <tbody id="employeeOrdersBody"></tbody>
+                </table>
+            `;
 
             const ordersBody = document.getElementById('employeeOrdersBody');
             ordersBody.innerHTML = '';
             employeeOrders.forEach(order => {
                 const row = document.createElement('tr');
                 row.innerHTML = `
-            <td>${order.maDonHang}</td>
-            <td>${order.maKhachHang}</td>
-            <td>${new Date(order.ngayDat).toLocaleDateString('vi-VN')}</td>
-            <td>${order.tongTien.toLocaleString('vi-VN')} VND</td>
-            <td>${order.trangThai}</td>
-        `;
+                    <td>${order.maDonHang}</td>
+                    <td>${order.maKhachHang}</td>
+                    <td>${new Date(order.ngayDat).toLocaleDateString('vi-VN')}</td>
+                    <td>${order.tongTien.toLocaleString('vi-VN')} VND</td>
+                    <td>${order.trangThai}</td>
+                `;
                 ordersBody.appendChild(row);
             });
 
@@ -746,21 +913,21 @@
 
             const importsTab = document.getElementById('employees');
             importsTab.innerHTML = `
-        <h3>Nhập kho của ${employee.hoTen} (${maNhanVien})</h3>
-        <button class="add-btn" onclick="renderEmployees()">Quay lại</button>
-        <table id="employeeImportsTable" role="grid">
-            <thead>
-                <tr>
-                    <th>Mã Nhập kho</th>
-                    <th>Cửa hàng</th>
-                    <th>Ngày nhập</th>
-                    <th>Tổng số lượng</th>
-                    <th>Ghi chú</th>
-                </tr>
-            </thead>
-            <tbody id="employeeImportsBody"></tbody>
-        </table>
-    `;
+                <h3>Nhập kho của ${employee.hoTen} (${maNhanVien})</h3>
+                <button class="add-btn" onclick="renderEmployees()">Quay lại</button>
+                <table id="employeeImportsTable" role="grid">
+                    <thead>
+                        <tr>
+                            <th>Mã Nhập kho</th>
+                            <th>Cửa hàng</th>
+                            <th>Ngày nhập</th>
+                            <th>Tổng số lượng</th>
+                            <th>Ghi chú</th>
+                        </tr>
+                    </thead>
+                    <tbody id="employeeImportsBody"></tbody>
+                </table>
+            `;
 
             const importsBody = document.getElementById('employeeImportsBody');
             importsBody.innerHTML = '';
@@ -768,16 +935,240 @@
                 const store = stores.find(s => s.maCuaHang === imp.maCuaHang);
                 const row = document.createElement('tr');
                 row.innerHTML = `
-            <td>${imp.maNhapKho}</td>
-            <td>${imp.maCuaHang} (${store ? store.tenCuaHang : 'Không xác định'})</td>
-            <td>${new Date(imp.ngayNhap).toLocaleDateString('vi-VN')}</td>
-            <td>${imp.tongSoLuong}</td>
-            <td>${imp.ghiChu || '-'}</td>
-        `;
+                    <td>${imp.maNhapKho}</td>
+                    <td>${imp.maCuaHang} (${store ? store.tenCuaHang : 'Không xác định'})</td>
+                    <td>${new Date(imp.ngayNhap).toLocaleDateString('vi-VN')}</td>
+                    <td>${imp.tongSoLuong}</td>
+                    <td>${imp.ghiChu || '-'}</td>
+                `;
                 importsBody.appendChild(row);
             });
 
             logActivity('Xem nhập kho', `Xem nhập kho của nhân viên ${maNhanVien}`);
+        }
+
+        function showPaymentForm() {
+            if (currentEmployee.chucVu !== 'Quản lý' && currentEmployee.chucVu !== 'Nhân viên bán hàng') {
+                alert('Bạn không có quyền thực hiện hành động này.');
+                return;
+            }
+
+            document.getElementById('paymentForm').style.display = 'block';
+            document.getElementById('paymentFormTitle').textContent = 'Thêm Thanh toán';
+            document.getElementById('maThanhToan').value = `TT${String(payments.length + 1).padStart(3, '0')}`;
+            document.getElementById('thoiGian').value = new Date().toISOString().slice(0, 16);
+            document.getElementById('soTien').value = '';
+            document.getElementById('hinhThuc').innerHTML = `
+                <option value="Tiền mặt">Tiền mặt</option>
+                <option value="Chuyển khoản">Chuyển khoản</option>
+                <option value="Momo">Momo</option>
+                <option value="ZaloPay">ZaloPay</option>
+            `;
+            document.getElementById('trangThai').value = 'Chưa thanh toán';
+            document.getElementById('maGiaoDich').value = '';
+            document.getElementById('ghiChu').value = '';
+
+            const orderSelect = document.getElementById('maDonHang');
+            orderSelect.innerHTML = '<option value="">Chọn đơn hàng</option>';
+            orders.filter(o => o.trangThai !== 'Đã hủy' && o.trangThai !== 'Đã thanh toán').forEach(o => {
+                if (!payments.some(p => p.maDonHang === o.maDonHang && p.trangThai === 'Đã thanh toán')) {
+                    orderSelect.innerHTML += `<option value="${o.maDonHang}">${o.maDonHang} (Tổng: ${o.tongTien.toLocaleString('vi-VN')} VND)</option>`;
+                }
+            });
+        }
+
+        function editPayment(maThanhToan) {
+            if (currentEmployee.chucVu !== 'Quản lý' && currentEmployee.chucVu !== 'Nhân viên bán hàng') {
+                alert('Bạn không có quyền thực hiện hành động này.');
+                return;
+            }
+
+            const payment = payments.find(p => p.maThanhToan === maThanhToan);
+            document.getElementById('paymentForm').style.display = 'block';
+            document.getElementById('paymentFormTitle').textContent = 'Sửa Thanh toán';
+            document.getElementById('maThanhToan').value = payment.maThanhToan;
+            document.getElementById('maDonHang').innerHTML = `<option value="${payment.maDonHang}">${payment.maDonHang}</option>`;
+            document.getElementById('thoiGian').value = new Date(payment.thoiGian).toISOString().slice(0, 16);
+            document.getElementById('soTien').value = payment.soTien;
+            document.getElementById('hinhThuc').innerHTML = `
+                <option value="Tiền mặt" ${payment.hinhThuc === 'Tiền mặt' ? 'selected' : ''}>Tiền mặt</option>
+                <option value="Chuyển khoản" ${payment.hinhThuc === 'Chuyển khoản' ? 'selected' : ''}>Chuyển khoản</option>
+                <option value="Momo" ${payment.hinhThuc === 'Momo' ? 'selected' : ''}>Momo</option>
+                <option value="ZaloPay" ${payment.hinhThuc === 'ZaloPay' ? 'selected' : ''}>ZaloPay</option>
+            `;
+            document.getElementById('trangThai').value = payment.trangThai;
+            document.getElementById('maGiaoDich').value = payment.maGiaoDich || '';
+            document.getElementById('ghiChu').value = payment.ghiChu || '';
+        }
+
+        function savePayment() {
+            if (currentEmployee.chucVu !== 'Quản lý' && currentEmployee.chucVu !== 'Nhân viên bán hàng') {
+                alert('Bạn không có quyền thực hiện hành động này.');
+                return;
+            }
+
+            const maThanhToan = document.getElementById('maThanhToan').value.trim();
+            const maDonHang = document.getElementById('maDonHang').value;
+            const thoiGian = document.getElementById('thoiGian').value;
+            const soTien = parseInt(document.getElementById('soTien').value);
+            const hinhThuc = document.getElementById('hinhThuc').value;
+            const trangThai = document.getElementById('trangThai').value;
+            const maGiaoDich = document.getElementById('maGiaoDich').value.trim() || null;
+            const ghiChu = document.getElementById('ghiChu').value.trim() || null;
+
+            // Validation
+            if (!maThanhToan || !maDonHang || !thoiGian || isNaN(soTien) || soTien < 0 || !hinhThuc || !trangThai) {
+                alert('Vui lòng điền đầy đủ thông tin hợp lệ.');
+                return;
+            }
+
+            const order = orders.find(o => o.maDonHang === maDonHang);
+            if (!order) {
+                alert('Đơn hàng không tồn tại.');
+                return;
+            }
+
+            if (trangThai === 'Đã thanh toán' && soTien !== order.tongTien) {
+                alert(`Số tiền thanh toán (${soTien.toLocaleString('vi-VN')} VND) phải khớp với tổng tiền đơn hàng (${order.tongTien.toLocaleString('vi-VN')} VND).`);
+                return;
+            }
+
+            if (order.trangThai === 'Đã hủy') {
+                alert('Không thể thanh toán cho đơn hàng đã hủy.');
+                return;
+            }
+
+            const existingPaymentIndex = payments.findIndex(p => p.maThanhToan === maThanhToan);
+            if (existingPaymentIndex === -1 && payments.some(p => p.maThanhToan === maThanhToan)) {
+                alert('Mã thanh toán đã tồn tại.');
+                return;
+            }
+
+            if (maGiaoDich && payments.some(p => p.maGiaoDich === maGiaoDich && p.maThanhToan !== maThanhToan)) {
+                alert('Mã giao dịch đã tồn tại.');
+                return;
+            }
+
+            if (existingPaymentIndex === -1 && payments.some(p => p.maDonHang === maDonHang && p.trangThai === 'Đã thanh toán')) {
+                alert('Đơn hàng này đã được thanh toán.');
+                return;
+            }
+
+            try {
+                const payment = { maThanhToan, maDonHang, thoiGian, soTien, hinhThuc, trangThai, maGiaoDich, ghiChu };
+
+                if (existingPaymentIndex !== -1) {
+                    payments[existingPaymentIndex] = payment;
+                    logActivity('Sửa thanh toán', `Sửa thanh toán ${maThanhToan} cho đơn hàng ${maDonHang}`);
+                } else {
+                    payments.push(payment);
+                    logActivity('Thêm thanh toán', `Thêm thanh toán ${maThanhToan} cho đơn hàng ${maDonHang}`);
+                }
+
+                // Update order status
+                if (trangThai === 'Đã thanh toán') {
+                    order.trangThai = 'Đã thanh toán';
+                }
+
+                localStorage.setItem('payments', JSON.stringify(payments));
+                localStorage.setItem('orders', JSON.stringify(orders));
+                document.getElementById('paymentForm').style.display = 'none';
+                renderPayments();
+            } catch (e) {
+                alert('Lỗi khi lưu thanh toán: ' + e.message);
+            }
+        }
+
+        function showRefundForm(maThanhToan) {
+            if (currentEmployee.chucVu !== 'Quản lý') {
+                alert('Bạn không có quyền thực hiện hành động này.');
+                return;
+            }
+
+            const payment = payments.find(p => p.maThanhToan === maThanhToan);
+            document.getElementById('refundForm').style.display = 'block';
+            document.getElementById('maHoanTien').value = `HT${String(refunds.length + 1).padStart(3, '0')}`;
+            document.getElementById('maThanhToanRefund').value = maThanhToan;
+            document.getElementById('thoiGianHoan').value = new Date().toISOString().slice(0, 16);
+            document.getElementById('soTienHoan').value = payment.soTien;
+            document.getElementById('lyDo').value = '';
+        }
+
+        function saveRefund() {
+            if (currentEmployee.chucVu !== 'Quản lý') {
+                alert('Bạn không có quyền thực hiện hành động này.');
+                return;
+            }
+
+            const maHoanTien = document.getElementById('maHoanTien').value.trim();
+            const maThanhToan = document.getElementById('maThanhToanRefund').value;
+            const thoiGian = document.getElementById('thoiGianHoan').value;
+            const soTien = parseInt(document.getElementById('soTienHoan').value);
+            const lyDo = document.getElementById('lyDo').value.trim();
+
+            // Validation
+            if (!maHoanTien || !maThanhToan || !thoiGian || isNaN(soTien) || soTien <= 0 || !lyDo) {
+                alert('Vui lòng điền đầy đủ thông tin hợp lệ.');
+                return;
+            }
+
+            if (refunds.some(r => r.maHoanTien === maHoanTien)) {
+                alert('Mã hoàn tiền đã tồn tại.');
+                return;
+            }
+
+            const payment = payments.find(p => p.maThanhToan === maThanhToan);
+            if (!payment || payment.trangThai !== 'Đã thanh toán') {
+                alert('Thanh toán không hợp lệ hoặc chưa được thanh toán.');
+                return;
+            }
+
+            if (soTien > payment.soTien) {
+                alert(`Số tiền hoàn (${soTien.toLocaleString('vi-VN')} VND) không được vượt quá số tiền thanh toán (${payment.soTien.toLocaleString('vi-VN')} VND).`);
+                return;
+            }
+
+            try {
+                // Update payment status
+                payment.trangThai = 'Hoàn tiền';
+
+                // Update order status
+                const order = orders.find(o => o.maDonHang === payment.maDonHang);
+                order.trangThai = 'Đã hủy';
+
+                // Restore inventory
+                const orderDetail = orderDetails.filter(od => od.maDonHang === payment.maDonHang);
+                orderDetail.forEach(item => {
+                    const product = products.find(p => p.maSanPham === item.maSanPham);
+                    const variant = product.variants.find(v => v.kichCo === item.kichCo && v.mauSac === item.mauSac);
+                    if (variant) {
+                        variant.soLuongTonKho += item.soLuong;
+                        logActivity('Cập nhật tồn kho', `Hoàn ${item.soLuong} ${product.tenSanPham} (Size: ${item.kichCo}, Màu: ${item.mauSac})`);
+                    }
+                });
+
+                // Save refund
+                const refund = { maHoanTien, maThanhToan, thoiGian, soTien, lyDo };
+                refunds.push(refund);
+
+                localStorage.setItem('payments', JSON.stringify(payments));
+                localStorage.setItem('orders', JSON.stringify(orders));
+                localStorage.setItem('products', JSON.stringify(products));
+                localStorage.setItem('refunds', JSON.stringify(refunds));
+                logActivity('Hoàn tiền', `Hoàn tiền ${maHoanTien} (${soTien.toLocaleString('vi-VN')} VND) cho thanh toán ${maThanhToan}`);
+                document.getElementById('refundForm').style.display = 'none';
+                renderPayments();
+            } catch (e) {
+                alert('Lỗi khi lưu hoàn tiền: ' + e.message);
+            }
+        }
+
+        function cancelPaymentForm() {
+            document.getElementById('paymentForm').style.display = 'none';
+        }
+
+        function cancelRefundForm() {
+            document.getElementById('refundForm').style.display = 'none';
         }
 
         function renderRevenueReport() {
@@ -801,7 +1192,7 @@
                 endDate = new Date(startDate);
                 endDate.setDate(endDate.getDate() + 7);
                 labelFormat = 'Tuần WW/YYYY';
-            } else if (filter === 'month') {
+            } else {
                 startDate = new Date(selectedDate.getFullYear(), selectedDate.getMonth(), 1);
                 endDate = new Date(startDate.getFullYear(), startDate.getMonth() + 1, 1);
                 labelFormat = 'MM/YYYY';
@@ -829,44 +1220,11 @@
             Object.keys(revenueData).forEach(key => {
                 const row = document.createElement('tr');
                 row.innerHTML = `
-            <td>${key}</td>
-            <td>${revenueData[key].toLocaleString('vi-VN')} VND</td>
-        `;
+                    <td>${key}</td>
+                    <td>${revenueData[key].toLocaleString('vi-VN')} VND</td>
+                `;
                 revenueBody.appendChild(row);
             });
-
-            // Render revenue chart
-            const labels = Object.keys(revenueData);
-            const data = Object.values(revenueData);
-            if (labels.length > 0) {
-                ```chartjs
-        {
-            "type": "bar",
-            "data": {
-                "labels": ${JSON.stringify(labels)},
-                "datasets": [{
-                    "label": "Doanh thu (VND)",
-                    "data": ${JSON.stringify(data)},
-                    "backgroundColor": "rgba(75, 192, 192, 0.6)",
-                    "borderColor": "rgba(75, 192, 192, 1)",
-                    "borderWidth": 1
-                }]
-            },
-            "options": {
-                "scales": {
-                    "y": {
-                        "beginAtZero": true
-                    }
-                },
-                "plugins": {
-                    "legend": {
-                        "display": true
-                    }
-                }
-            }
-        }
-        ```
-            }
         }
 
         function renderInventoryReport() {
@@ -881,12 +1239,12 @@
                 product.variants.forEach(variant => {
                     const row = document.createElement('tr');
                     row.innerHTML = `
-                <td>${product.maSanPham}</td>
-                <td>${product.tenSanPham}</td>
-                <td>${variant.kichCo}</td>
-                <td>${variant.mauSac}</td>
-                <td>${variant.soLuongTonKho}</td>
-            `;
+                        <td>${product.maSanPham}</td>
+                        <td>${product.tenSanPham}</td>
+                        <td>${variant.kichCo}</td>
+                        <td>${variant.mauSac}</td>
+                        <td>${variant.soLuongTonKho}</td>
+                    `;
                     inventoryBody.appendChild(row);
                 });
             });
@@ -920,18 +1278,18 @@
             sortedProducts.forEach(product => {
                 const row = document.createElement('tr');
                 row.innerHTML = `
-            <td>${product.maSanPham}</td>
-            <td>${product.tenSanPham}</td>
-            <td>${product.kichCo}</td>
-            <td>${product.mauSac}</td>
-            <td>${product.soLuong}</td>
-        `;
+                    <td>${product.maSanPham}</td>
+                    <td>${product.tenSanPham}</td>
+                    <td>${product.kichCo}</td>
+                    <td>${product.mauSac}</td>
+                    <td>${product.soLuong}</td>
+                `;
                 topProductsBody.appendChild(row);
             });
         }
 
         function exportRevenueCSV() {
-            if (currentEmployee.chucVu !== 'Quản lý') {
+            if ( reshuffledEmployee.chucVu !== 'Quản lý') {
                 alert('Bạn không có quyền xuất báo cáo.');
                 return;
             }
@@ -994,42 +1352,42 @@
         }
 
         function exportTopProductsCSV() {
-            if (currentEmployee.chucVu !== 'Quản lý') {
-                alert('Bạn không có quyền xuất báo cáo.');
-                return;
+        if (currentEmployee.chucVu !== 'Quản lý') {
+            alert('Bạn không có quyền xuất báo cáo.');
+            return;
+        }
+        const productSales = {};
+        orderDetails.forEach(detail => {
+            const key = `${detail.maSanPham}-${detail.kichCo}-${detail.mauSac}`;
+            if (!productSales[key]) {
+                const product = products.find(p => p.maSanPham === detail.maSanPham);
+                productSales[key] = {
+                    maSanPham: detail.maSanPham,
+                    tenSanPham: product ? product.tenSanPham : 'Không xác định',
+                    kichCo: detail.kichCo,
+                    mauSac: detail.mauSac,
+                    soLuong: 0
+                };
             }
-            const productSales = {};
-            orderDetails.forEach(detail => {
-                const key = `${detail.maSanPham}-${detail.kichCo}-${detail.mauSac}`;
-                if (!productSales[key]) {
-                    const product = products.find(p => p.maSanPham === detail.maSanPham);
-                    productSales[key] = {
-                        maSanPham: detail.maSanPham,
-                        tenSanPham: product ? product.tenSanPham : 'Không xác định',
-                        kichCo: detail.kichCo,
-                        mauSac: detail.mauSac,
-                        soLuong: 0
-                    };
-                }
-                productSales[key].soLuong += detail.soLuong;
-            });
+            productSales[key].soLuong += detail.soLuong;
+        });
 
-            let csv = 'Mã Sản phẩm,Tên Sản phẩm,Kích cỡ,Màu sắc,Số lượng bán\n';
-            Object.values(productSales).sort((a, b) => b.soLuong - a.soLuong).forEach(product => {
-                csv += `${product.maSanPham},${product.tenSanPham},${product.kichCo},${product.mauSac},${product.soLuong}\n`;
-            });
+        let csv = 'Mã Sản phẩm,Tên Sản phẩm,Kích cỡ,Màu sắc,Số lượng bán\n';
+        Object.values(productSales).sort((a, b) => b.soLuong - a.soLuong).forEach(product => {
+            csv += `${product.maSanPham},${product.tenSanPham},${product.kichCo},${product.mauSac},${product.soLuong}\n`;
+        });
 
-            downloadCSV(csv, `TopSanPham_${new Date().toISOString().split('T')[0]}.csv`);
-        }
+        downloadCSV(csv, `TopSanPham_${new Date().toISOString().split('T')[0]}.csv`);
+    }
 
-        function downloadCSV(csv, filename) {
-            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-            const link = document.createElement('a');
-            link.href = URL.createObjectURL(blob);
-            link.download = filename;
-            link.click();
-            URL.revokeObjectURL(link.href);
-        }
+    function downloadCSV(csv, filename) {
+        const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+        const link = document.createElement('a');
+        link.href = URL.createObjectURL(blob);
+        link.download = filename;
+        link.click();
+        URL.revokeObjectURL(link.href);
+    }
 
         function logActivity(loaiHanhDong, chiTiet) {
             if (!currentEmployee) return;
